@@ -1,0 +1,13 @@
+Makefile
+*.pro.user*
+*~
+*.list
+moc/
+rcc/
+obj/
+RPMS/
+rpm/*.spec
+harbour-bibleme
+moc_*.cpp
+*.o
+qrc_*.cpp

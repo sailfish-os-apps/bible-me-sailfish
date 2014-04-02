@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/harbour-bibleme.qml</file>
+        <file>qml/cover/CoverPage.qml</file>
+        <file>qml/pages/BookmarksPage.qml</file>
+        <file>qml/pages/FilesPage.qml</file>
+        <file>qml/pages/SearchPage.qml</file>
+        <file>qml/pages/SelectPage.qml</file>
+        <file>qml/pages/ViewPage.qml</file>
+        <file>qml/pages/SettingsPage.qml</file>
+        <file>harbour-bibleme.svg</file>
+        <file>harbour-bibleme.png</file>
+    </qresource>
+</RCC>
