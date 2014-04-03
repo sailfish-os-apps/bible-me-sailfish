@@ -1,13 +1,16 @@
-#include "BibleWorker.h"
 
+#include "BibleWorker.h"
 #include "BibleText.h"
 #include "BibleBook.h"
 #include "BibleChapter.h"
 #include "BibleVerse.h"
 
-
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QXmlStreamReader>
+#include <QDateTime>
+#include <QStringList>
 #include <QDebug>
-
 
 /************************** WORKER ****************************/
 
@@ -57,7 +60,7 @@ BibleChapter * BibleWorker::getBibleChapterFromId (QString chapterId) const {
 }
 
 void BibleWorker::doInit () {
-    qDebug () << "BibleWorker::doInit";
+    //qDebug () << "BibleWorker::doInit";
 
     QFile fileIndex (QString ("%1/index.xml").arg (DATADIR_PATH));
     if (fileIndex.exists ()) {
@@ -65,12 +68,12 @@ void BibleWorker::doInit () {
     }
     QString currentTextKey = m_settings->value ("currentTextKey", "").toString ();
     if (currentTextKey != "") {
-       doLoadText (currentTextKey);
+        doLoadText (currentTextKey);
     }
 }
 
 void BibleWorker::doLoadIndex () {
-    qDebug () << "BibleWorker::doLoadIndex";
+    //qDebug () << "BibleWorker::doLoadIndex";
 
     reloadIndexStarted ();
 
@@ -93,15 +96,15 @@ void BibleWorker::doLoadIndex () {
     while (!xml.atEnd () && !xml.hasError ()) { /* We'll parse the XML until we reach end of it.*/
         /* Read next element.*/
         if (xml.readNext () == QXmlStreamReader::StartElement) {
-            //qDebug () << "ELEMENT start";
+            ////qDebug () << "ELEMENT start";
             if (xml.name () == "bibles") {
-                //qDebug () << "bibles";
+                ////qDebug () << "bibles";
             }
             else if (xml.name () == "language") {
                 langId    = xml.attributes ().value ("id").toString ();
                 langTitle = xml.attributes ().value ("title").toString ();
 
-                //qDebug () << ">>> language" << "langId=" << langId << "langTitle=" << langTitle;
+                ////qDebug () << ">>> language" << "langId=" << langId << "langTitle=" << langTitle;
             }
             else if (xml.name () == "bible") {
                 bibleId    = xml.attributes ().value ("id").toString ();
@@ -109,7 +112,7 @@ void BibleWorker::doLoadIndex () {
 
                 QString key = QString ("%1__%2").arg (langId).arg (bibleId);
 
-                //qDebug () << ">>> bible" << "bibleId=" << bibleId << "bibleTitle=" << bibleTitle;
+                ////qDebug () << ">>> bible" << "bibleId=" << bibleId << "bibleTitle=" << bibleTitle;
 
                 BibleText * text = new BibleText (this);
                 text->update_languageID    (langId.toLocal8Bit ());
@@ -131,7 +134,7 @@ void BibleWorker::doLoadIndex () {
         qWarning () << xml.errorString ();
     }
 
-    qDebug () << "text keys=" << m_hashTextIndex.keys ();
+    //qDebug () << "text keys=" << m_hashTextIndex.keys ();
 
     xml.clear ();
     fileIndex.close ();
@@ -142,7 +145,7 @@ void BibleWorker::doLoadIndex () {
 }
 
 void BibleWorker::doRefreshIndex () {
-    qDebug () << "BibleWorker::doRefreshIndex";
+    //qDebug () << "BibleWorker::doRefreshIndex";
 
     emit refreshStarted ();
 
@@ -151,7 +154,7 @@ void BibleWorker::doRefreshIndex () {
 }
 
 void BibleWorker::doDownloadText (QString langId, QString bibleId) {
-    qDebug () << "BibleWorker::doDownloadText" << langId << bibleId;
+    //qDebug () << "BibleWorker::doDownloadText" << langId << bibleId;
 
     QString key = QString ("%1__%2").arg (langId).arg (bibleId);
     qWarning () << "requestText" << langId << bibleId;
@@ -188,7 +191,7 @@ void BibleWorker::doRemoveText (QString textKey) {
 }
 
 void BibleWorker::doLoadText (QString textKey) {
-    qDebug () << "BibleWorker::doLoadText" << textKey;
+    //qDebug () << "BibleWorker::doLoadText" << textKey;
 
     emit loadTextStarted ();
 
@@ -301,13 +304,18 @@ void BibleWorker::doLoadText (QString textKey) {
     emit booksModelLoaded    (ret);
 
     QString currPosId = m_settings->value ("currPosId", "").toString ();
+    m_currBookId  = "";
+    m_currChapId  = "";
+    m_currVerseId = "";
     if (!currPosId.isEmpty ()) {
         doNavigateToRefId (currPosId);
     }
 
-    qDebug () << "books="    << m_hashBookIndex.keys ();
-    qDebug () << "chapters=" << m_hashChapterIndex.keys ();
-    qDebug () << "verses="   << m_hashVerseIndex.keys ();
+    emit currentTextChanged (textKey);
+
+    ////qDebug () << "books="    << m_hashBookIndex.keys ();
+    ////qDebug () << "chapters=" << m_hashChapterIndex.keys ();
+    ////qDebug () << "verses="   << m_hashVerseIndex.keys ();
 
     emit loadTextFinished ();
 }
@@ -322,20 +330,22 @@ void BibleWorker::doNavigateToRefId (QString refId) {
         QByteArray tmp;
         tmp.append (bookName);
         doLoadBook (tmp);
+        m_currBookId = QString::fromLocal8Bit (tmp);
+
         tmp.append ('.');
         tmp.append (chapterIdx);
         doLoadChapter (tmp);
+        m_currChapId = QString::fromLocal8Bit (tmp);
+
         tmp.append ('.');
         tmp.append (verseIdx);
-
-        emit currentPositionChanged (tmp);
-
+        m_currVerseId = QString::fromLocal8Bit (tmp);
         doSaveCurrPosId (tmp);
     }
 }
 
 void BibleWorker::doSaveCurrPosId (QString currPosId) {
-    qDebug () << "BibleWorker::doSaveCurrPosId" << currPosId;
+    //qDebug () << "BibleWorker::doSaveCurrPosId" << currPosId;
 
     if (m_settings->value ("currPosId").toString () != currPosId) {
         m_settings->setValue ("currPosId", currPosId.toLocal8Bit ());
@@ -344,50 +354,54 @@ void BibleWorker::doSaveCurrPosId (QString currPosId) {
 }
 
 void BibleWorker::doLoadBook (QString bookId) { // reset the chapters model
-    qDebug () << "BibleWorker::doLoadBook" << bookId;
+    //qDebug () << "BibleWorker::doLoadBook" << bookId;
 
-    doSaveCurrPosId (QString ("%1.1.1").arg (bookId));
+    if (bookId != m_currBookId) {
+        doSaveCurrPosId (QString ("%1.1.1").arg (bookId));
 
-    QVariantList ret;
+        QVariantList ret;
 
-    BibleBook * book = getBibleBookFromId (bookId);
-    if (book) {
-        int start = book->get_firstChapterIdx ();
-        int end   = book->get_lastChapterIdx  ();
+        BibleBook * book = getBibleBookFromId (bookId);
+        if (book) {
+            int start = book->get_firstChapterIdx ();
+            int end   = book->get_lastChapterIdx  ();
 
-        QList<BibleChapter *> tmp = m_listBibleChapters.mid (start, end - start);
-        foreach (BibleChapter * chapter, tmp) {
-            ret.append (chapter->toQtVariant ());
+            QList<BibleChapter *> tmp = m_listBibleChapters.mid (start, end - start);
+            foreach (BibleChapter * chapter, tmp) {
+                ret.append (chapter->toQtVariant ());
+            }
         }
-    }
 
-    emit chaptersModelLoaded (ret);
-    emit versesModelLoaded   (QVariantList ());
+        emit chaptersModelLoaded (ret);
+        emit versesModelLoaded   (QVariantList ());
+    }
 }
 
 void BibleWorker::doLoadChapter (QString chapterId) { // reset the verses model
-    qDebug () << "BibleWorker::doLoadChapter" << chapterId;
+    //qDebug () << "BibleWorker::doLoadChapter" << chapterId;
 
-    doSaveCurrPosId (QString ("%1.1").arg (chapterId));
+    if (chapterId != m_currChapId) {
+        doSaveCurrPosId (QString ("%1.1").arg (chapterId));
 
-    QVariantList ret;
+        QVariantList ret;
 
-    BibleChapter * chapter = getBibleChapterFromId (chapterId);
-    if (chapter) {
-        int start = chapter->get_firstVerseIdx ();
-        int end   = chapter->get_lastVerseIdx  ();
+        BibleChapter * chapter = getBibleChapterFromId (chapterId);
+        if (chapter) {
+            int start = chapter->get_firstVerseIdx ();
+            int end   = chapter->get_lastVerseIdx  ();
 
-        QList<BibleVerse *> tmp = m_listBibleVerses.mid (start, end - start);
-        foreach (BibleVerse * verse, tmp) {
-            ret.append (verse->toQtVariant ());
+            QList<BibleVerse *> tmp = m_listBibleVerses.mid (start, end - start);
+            foreach (BibleVerse * verse, tmp) {
+                ret.append (verse->toQtVariant ());
+            }
         }
-    }
 
-    emit versesModelLoaded (ret);
+        emit versesModelLoaded (ret);
+    }
 }
 
 void BibleWorker::doSearchVerse (QString searchToken) {
-    qDebug () << "BibleWorker::doSearchVerse" << searchToken;
+    //qDebug () << "BibleWorker::doSearchVerse" << searchToken;
 
     emit searchStarted ();
 
@@ -407,13 +421,13 @@ void BibleWorker::doSearchVerse (QString searchToken) {
 }
 
 void BibleWorker::onIndexRequestFinished () {
-    qDebug () << "BibleWorker::onIndexRequestFinished";
+    //qDebug () << "BibleWorker::onIndexRequestFinished";
 
     QNetworkReply * reply = qobject_cast<QNetworkReply *>(sender ());
     if (reply) {
         if (reply->error () == QNetworkReply::NoError) {
             QByteArray data = reply->readAll ();
-            //qDebug () << "data=" << data;
+            ////qDebug () << "data=" << data;
 
             QFile fileIndex (QString ("%1/index.xml").arg (DATADIR_PATH));
             fileIndex.open (QIODevice::ReadWrite | QIODevice::Truncate);
@@ -433,31 +447,31 @@ void BibleWorker::onIndexRequestFinished () {
 }
 
 void BibleWorker::onTextRequestProgress (qint64 bytesReceived, qint64 bytesTotal) {
-    qDebug () << "BibleWorker::onTextRequestProgress";
+    //qDebug () << "BibleWorker::onTextRequestProgress";
 
     QNetworkReply * reply = qobject_cast<QNetworkReply *>(sender ());
     if (reply) {
         QString key = reply->property ("key").toString ();
-        qDebug () << "onTextRequestProgress:" << "key=" << key;
+        //qDebug () << "onTextRequestProgress:" << "key=" << key;
 
         BibleText * text = getBibleTextFromKey (key);
         if (text) {
             text->update_percent (qreal (bytesReceived) / qreal (bytesTotal) * 100);
             emit textItemUpdated (key, text->toQtVariant ());
         }
-        qDebug () << "onTextRequestProgress:" << "text=" << text;
+        //qDebug () << "onTextRequestProgress:" << "text=" << text;
 
-        qDebug () << "onTextRequestProgress:" << "bytesReceived=" << bytesReceived << "bytesTotal=" << bytesTotal;
+        //qDebug () << "onTextRequestProgress:" << "bytesReceived=" << bytesReceived << "bytesTotal=" << bytesTotal;
     }
 }
 
 void BibleWorker::onTextRequestFinished () {
-    qDebug () << "BibleWorker::onTextRequestFinished";
+    //qDebug () << "BibleWorker::onTextRequestFinished";
 
     QNetworkReply * reply = qobject_cast<QNetworkReply *>(sender ());
     if (reply) {
         QString key = reply->property ("key").toString ();
-        qDebug () << "onTextRequestFinished:" << "key=" << key;
+        //qDebug () << "onTextRequestFinished:" << "key=" << key;
 
         BibleText * text = getBibleTextFromKey (key);
         if (reply->error () == QNetworkReply::NoError) {
@@ -466,10 +480,10 @@ void BibleWorker::onTextRequestFinished () {
                 text->update_hasLocal  (true);
                 emit textItemUpdated (key, text->toQtVariant ());
             }
-            qDebug () << "onTextRequestFinished:" << "text=" << text;
+            //qDebug () << "onTextRequestFinished:" << "text=" << text;
 
             QByteArray data = reply->readAll ();
-            //qDebug () << "data=" << data;
+            ////qDebug () << "data=" << data;
 
             QFile fileText (QString ("%1/%2.xml").arg (DATADIR_PATH).arg (key));
             fileText.open  (QIODevice::ReadWrite | QIODevice::Truncate);

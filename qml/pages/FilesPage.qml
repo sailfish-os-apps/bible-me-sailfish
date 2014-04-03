@@ -65,7 +65,7 @@ Page {
                 onClicked: {
                     if (itemText.bibleText.hasLocal) {
                         pageStack.navigateBack ();
-                        bibleEngine.currentTextKey = itemText.key;
+                        bibleEngine.loadText ("%1__%2".arg (model.languageID).arg (model.bibleID));
                     }
                 }
                 ListView.onAdd: AddAnimation { target: itemText; }

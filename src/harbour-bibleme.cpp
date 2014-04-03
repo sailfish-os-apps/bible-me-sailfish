@@ -1,11 +1,14 @@
 
-#include <QtQuick>
-#include <QtQml>
+#include <QGuiApplication>
+#include <QQuickView>
+#include <QQmlEngine>
 #include <QAbstractItemModel>
 #include <QAbstractProxyModel>
-#include <QGuiApplication>
+#include <QSortFilterProxyModel>
 #include <QNetworkProxy>
+#include <QUrl>
 
+#include <qqml.h>
 #include <sailfishapp.h>
 
 #include <QQmlObjectListModel>
@@ -23,7 +26,6 @@
 int main (int argc, char * argv []){
     qmlRegisterUncreatableType<QAbstractItemModel>    (QML_MODULE, "AbstractItemModel",  "!!!");
     qmlRegisterUncreatableType<QAbstractListModel>    (QML_MODULE, "AbstractListModel",  "!!!");
-    //qmlRegisterUncreatableType<QAbstractProxyModel>   (QML_MODULE, "AbstractProxyModel", "!!!");
     qmlRegisterUncreatableType<QQmlObjectListModel>   (QML_MODULE, "ObjectListModel",    "!!!");
     qmlRegisterUncreatableType<QQmlVariantListModel>  (QML_MODULE, "VariantListModel",   "!!!");
     qmlRegisterType<QSortFilterProxyModel>            (QML_MODULE, "SortFilterProxyModel");

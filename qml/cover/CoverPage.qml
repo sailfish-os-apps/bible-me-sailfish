@@ -27,10 +27,33 @@ CoverBackground {
             anchors.verticalCenterOffset: -50;
         }
     }
-    Label {
-        id: label;
-        anchors.centerIn: parent
-        text: (bibleEngine.currentVerseObj ? bibleEngine.currentVerseObj.verseId : "-");
+    Column {
+        anchors {
+            top: parent.top;
+            left: parent.left;
+            right: parent.right;
+            margins: Theme.paddingMedium;
+        }
+
+        Repeater {
+            model: formatReference (bibleEngine.currentPositionId).split (",");
+            delegate: Label {
+                text: model.modelData.trim ();
+                textFormat: Text.PlainText;
+                fontSizeMode: Text.HorizontalFit;
+                height: contentHeight;
+                minimumPixelSize: 10;
+                horizontalAlignment: Text.AlignHCenter;
+                font {
+                    pixelSize: Theme.fontSizeExtraLarge;
+                    family: Theme.fontFamilyHeading;
+                }
+                anchors {
+                    left: (parent ? parent.left : undefined);
+                    right: (parent ? parent.right : undefined);
+                }
+            }
+        }
     }
     CoverActionList {
         CoverAction {

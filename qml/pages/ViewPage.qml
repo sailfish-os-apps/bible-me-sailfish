@@ -7,12 +7,12 @@ Page {
     allowedOrientations: Orientation.All;
 
     function repositionView () {
-        console.warn ("repositionView", bibleEngine.currentChapterObj, bibleEngine.currentVerseObj);
-        if (bibleEngine.currentChapterObj && bibleEngine.currentVerseObj) {
-            for (var idx = 0; idx < bibleEngine.currentChapterObj.modelVerses.count (); idx++) {
-                if (bibleEngine.currentChapterObj.modelVerses.get (idx) === bibleEngine.currentVerseObj) {
-                    view.positionViewAtIndex (idx, ListView.Center);
-                }
+        //console.debug ("repositionView", bibleEngine.currentPositionId);
+        var tmp = String (bibleEngine.currentPositionId).split ('.');
+        if (tmp.length === 3) {
+            var idx = (parseInt (tmp.pop ()) -1);
+            if (idx < view.count) {
+                view.positionViewAtIndex (idx, ListView.Center);
             }
         }
         else {
@@ -22,9 +22,8 @@ Page {
 
     Connections {
         target: bibleEngine;
-        onCurrentBookObjChanged:    { repositionView (); }
-        onCurrentChapterObjChanged: { repositionView (); }
-        onCurrentVerseObjChanged:   { repositionView (); }
+        onCurrentTextKeyChanged   : { repositionView (); }
+        onCurrentPositionIdChanged: { repositionView (); }
         Component.onCompleted:      { repositionView (); }
     }
     SilicaListView {
@@ -32,7 +31,7 @@ Page {
         enabled: !busy.visible;
         opacity: (enabled ? 1.0 : 0.35);
         anchors.fill: parent;
-        model: (bibleEngine.currentChapterObj ? bibleEngine.currentChapterObj.modelVerses : 0);
+        model: bibleEngine.modelVerses;
         header: BackgroundItem {
             height: Theme.itemSizeMedium;
             anchors {
@@ -47,7 +46,7 @@ Page {
                 anchors.fill: parent;
             }
             PageHeader {
-                title: (bibleEngine.currentChapterObj ? String (bibleEngine.currentChapterObj.chapterId).split ('.').join (qsTr (", chap. ")) : "");
+                title: formatReference (bibleEngine.currentPositionId);
             }
         }
         delegate: Component {
@@ -76,9 +75,9 @@ Page {
                     left: parent.left;
                     right: parent.right;
                 }
-                onClicked: { bibleEngine.setCurrent (model.verseId); }
+                onClicked: { bibleEngine.setCurrentVerse (model.verseId); }
 
-                property bool isCurrent : (bibleEngine.currentVerseObj && model.verseId === bibleEngine.currentVerseObj.verseId);
+                property bool isCurrent : (bibleEngine.currentPositionId === String (model.verseId));
 
                 Label {
                     id: lblVerse;
@@ -139,24 +138,27 @@ Page {
             MenuItem {
                 text: qsTr ("Go to next chapter");
                 font.family: Theme.fontFamilyHeading;
-                enabled: (bibleEngine.currentBookObj &&
-                          bibleEngine.currentChapterObj &&
-                          bibleEngine.currentBookObj.modelChapters.last () !== bibleEngine.currentChapterObj);
+                enabled: (currentBookName !== "" && currentChapterIdx > 0 && currentChapterIdx < bibleEngine.modelChapters.count ());
                 onClicked: {
-                    var idx = bibleEngine.currentBookObj.modelChapters.indexOf (bibleEngine.currentChapterObj);
-                    bibleEngine.setCurrent (bibleEngine.currentBookObj.modelChapters.get (idx +1) ['chapterId']);
+                    view.positionViewAtBeginning ();
+                    bibleEngine.setCurrentVerse ("%1.%2.1".arg (currentBookName).arg (currentChapterIdx +1));
                 }
+
+                property string currentBookName   : (bibleEngine.currentPositionId.split ('.') [0] || "");
+                property int    currentChapterIdx : (parseInt (bibleEngine.currentPositionId.split ('.') [1] || "0"));
             }
         }
         ViewPlaceholder {
-            text: qsTr ("No text available. Use the menu to choose one");
+            text: (bibleEngine.currentTextKey === ""
+                   ? qsTr ("No text available. Use the menu to choose one")
+                   : qsTr ("No verse select. Click on header to select"));
             enabled: (!view.count);
         }
         VerticalScrollDecorator { }
     }
     BusyIndicator {
         id: busy;
-        running: (bibleEngine.isLoading);
+        running: bibleEngine.isLoading;
         visible: running;
         size: BusyIndicatorSize.Large;
         anchors.centerIn: parent;

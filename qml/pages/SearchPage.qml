@@ -60,10 +60,8 @@ Page {
                 }
                 onClicked: {
                     pageStack.navigateBack ();
-                    bibleEngine.setCurrent (bibleVerse.verseId);
+                    bibleEngine.setCurrentVerse (model.verseId);
                 }
-
-                property BibleVerse bibleVerse : model.qtVariant;
 
                 Column {
                     id: layoutText;
@@ -75,7 +73,7 @@ Page {
                     }
 
                     Label {
-                        text: itemVerse.bibleVerse.verseId;
+                        text: model.verseId;
                         color: Theme.primaryColor;
                         textFormat: Text.PlainText;
                         horizontalAlignment: Text.AlignLeft;
@@ -90,7 +88,7 @@ Page {
                         }
                     }
                     Label {
-                        text: itemVerse.bibleVerse.textContent;
+                        text: model.textContent;
                         color: Theme.secondaryColor;
                         textFormat: Text.PlainText;
                         horizontalAlignment: Text.AlignJustify;

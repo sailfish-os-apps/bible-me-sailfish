@@ -29,7 +29,7 @@ Page {
         anchors.fill: parent;
         anchors.topMargin: header.height;
 
-        property real itemWidth: (width / 3);
+        property real itemWidth: ((width - 2) / 3);
 
         SilicaListView {
             id: viewBooks;
@@ -38,7 +38,7 @@ Page {
                 top: parent.top;
                 bottom: parent.bottom;
             }
-            model: (bibleEngine.currentTextKey !== "" ? bibleEngine.modelBooks : 0);
+            model: bibleEngine.modelBooks;
             delegate:Component {
                 ListItem {
                     contentHeight: Theme.itemSizeSmall;
@@ -46,21 +46,21 @@ Page {
                         left: parent.left;
                         right: parent.right;
                     }
-                    onClicked: { bibleEngine.setCurrent (model.bookId); }
+                    onClicked: { bibleEngine.loadBook (model.bookId); }
 
                     Label {
-                        text: model.bookId;
-                        color: (bibleEngine.currentBookObj && model.bookId === bibleEngine.currentBookObj.bookId
+                        text: formatReference (model.bookId, true);
+                        color: (bibleEngine.currentPositionId.indexOf (String (model.bookId) + ".") === 0
                                 ? Theme.highlightColor
                                 : Theme.primaryColor);
                         horizontalAlignment: Text.AlignHCenter;
-                        font.pixelSize: Theme.fontSizeMedium;
+                        font.pixelSize: Theme.fontSizeSmall;
                         font.family: Theme.fontFamilyHeading;
-                        elide: Text.ElideRight;
+                        fontSizeMode: Text.HorizontalFit;
                         anchors {
                             left: parent.left;
                             right: parent.right;
-                            margins: Theme.paddingLarge;
+                            margins: Theme.paddingSmall;
                             verticalCenter: parent.verticalCenter;
                         }
                     }
@@ -68,6 +68,15 @@ Page {
             }
 
             VerticalScrollDecorator { }
+        }
+        Rectangle {
+            color: "white";
+            opacity: 0.15;
+            width: 1;
+            anchors {
+                top: parent.top;
+                bottom: parent.bottom;
+            }
         }
         SilicaListView {
             id: viewChapters;
@@ -76,7 +85,7 @@ Page {
                 top: parent.top;
                 bottom: parent.bottom;
             }
-            model: (bibleEngine.currentBookObj !== null ? bibleEngine.currentBookObj.modelChapters : 0);
+            model: bibleEngine.modelChapters;
             delegate:Component {
                 ListItem {
                     contentHeight: Theme.itemSizeSmall;
@@ -84,21 +93,21 @@ Page {
                         left: parent.left;
                         right: parent.right;
                     }
-                    onClicked: { bibleEngine.setCurrent (model.chapterId); }
+                    onClicked: { bibleEngine.loadChapter (model.chapterId); }
 
                     Label {
-                        text: qsTr ("chap. %1").arg (String (model.chapterId).split ('.').pop ());
-                        color: (bibleEngine.currentChapterObj && model.chapterId === bibleEngine.currentChapterObj.chapterId
+                        text: formatReference (model.chapterId, true);
+                        color: (bibleEngine.currentPositionId.indexOf (String (model.chapterId) + ".") === 0
                                 ? Theme.highlightColor
                                 : Theme.primaryColor);
                         horizontalAlignment: Text.AlignHCenter;
-                        font.pixelSize: Theme.fontSizeMedium;
+                        font.pixelSize: Theme.fontSizeSmall;
                         font.family: Theme.fontFamilyHeading;
                         elide: Text.ElideRight;
                         anchors {
                             left: parent.left;
                             right: parent.right;
-                            margins: Theme.paddingLarge;
+                            margins: Theme.paddingSmall;
                             verticalCenter: parent.verticalCenter;
                         }
                     }
@@ -107,6 +116,15 @@ Page {
 
             VerticalScrollDecorator { }
         }
+        Rectangle {
+            color: "white";
+            opacity: 0.15;
+            width: 1;
+            anchors {
+                top: parent.top;
+                bottom: parent.bottom;
+            }
+        }
         SilicaListView {
             id: viewVerses;
             width: parent.itemWidth;
@@ -114,7 +132,7 @@ Page {
                 top: parent.top;
                 bottom: parent.bottom;
             }
-            model: (bibleEngine.currentChapterObj !== null ? bibleEngine.currentChapterObj.modelVerses : 0);
+            model: bibleEngine.modelVerses;
             delegate:Component {
                 ListItem {
                     contentHeight: Theme.itemSizeSmall;
@@ -122,21 +140,21 @@ Page {
                         left: parent.left;
                         right: parent.right;
                     }
-                    onClicked: { bibleEngine.setCurrent (model.verseId); }
+                    onClicked: { bibleEngine.setCurrentVerse (model.verseId); }
 
                     Label {
-                        text: qsTr ("v. %1").arg (String (model.verseId).split ('.').pop ());
-                        color: (bibleEngine.currentVerseObj && model.verseId === bibleEngine.currentVerseObj.verseId
+                        text: formatReference (model.verseId, true);
+                        color: (bibleEngine.currentPositionId === String (model.verseId)
                                 ? Theme.highlightColor
                                 : Theme.primaryColor);
                         horizontalAlignment: Text.AlignHCenter;
-                        font.pixelSize: Theme.fontSizeMedium;
+                        font.pixelSize: Theme.fontSizeSmall;
                         font.family: Theme.fontFamilyHeading;
                         elide: Text.ElideRight;
                         anchors {
                             left: parent.left;
                             right: parent.right;
-                            margins: Theme.paddingLarge;
+                            margins: Theme.paddingSmall;
                             verticalCenter: parent.verticalCenter;
                         }
                     }

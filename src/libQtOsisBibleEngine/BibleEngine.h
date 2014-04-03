@@ -2,29 +2,22 @@
 #define BIBLEENGINE_H
 
 #include <QObject>
-#include <QQmlObjectListModel>
-#include <QQmlVariantListModel>
 #include <QQmlHelpers>
-#include <QXmlStreamReader>
-#include <QDir>
-#include <QNetworkConfigurationManager>
-#include <QGuiApplication>
-#include <QRegularExpression>
-#include <QSettings>
-#include <QDateTime>
-#include <QStringList>
-#include <QTimer>
-#include <QStandardPaths>
-#include <QThread>
+#include <QHash>
+#include <QString>
 #include <QVariant>
-#include <QVariantList>
-#include <QVariantMap>
+#include <QtGlobal>
+#include <QNetworkConfigurationManager>
+#include <QThread>
+#include <QSettings>
 
-#include "BibleWorker.h"
-#include "BibleText.h"
-#include "BibleBook.h"
-#include "BibleChapter.h"
-#include "BibleVerse.h"
+class QQmlObjectListModel;
+
+class BibleWorker;
+class BibleText;
+class BibleBook;
+class BibleChapter;
+class BibleVerse;
 
 class BibleEngine : public QObject {
     Q_OBJECT
@@ -37,17 +30,16 @@ class BibleEngine : public QObject {
     QML_READONLY_PROPERTY (bool, isSearching)
     QML_READONLY_PROPERTY (bool, isLoading)
     QML_READONLY_PROPERTY (QString, currentPositionId)
+    QML_READONLY_PROPERTY (QString, currentTextKey)
 
     QML_WRITABLE_PROPERTY (bool, showLocalOnly)
     QML_WRITABLE_PROPERTY (qreal, textFontSize)
-    QML_WRITABLE_PROPERTY (QString, currentTextKey)
 
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelTexts)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelBooks)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelChapters)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelVerses)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelSearchResults)
-
 
     //QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelBookmarks)
 
@@ -92,6 +84,12 @@ private slots:
     void onSearchStarted          ();
     void onSearchResultItem       (QVariantMap verse);
     void onSearchFinished         ();
+
+    void onLoadTextStarted        ();
+    void onLoadTextFinished       ();
+
+    void onRefreshStarted         ();
+    void onRefreshFinished        ();
 
     void onTextItemUpdated     (QString textKey, QVariantMap item);
 

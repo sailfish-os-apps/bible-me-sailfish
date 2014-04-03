@@ -4,15 +4,9 @@
 #include <QObject>
 #include <QQmlHelpers>
 #include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QXmlStreamReader>
 #include <QDir>
-#include <QNetworkConfigurationManager>
 #include <QRegularExpression>
 #include <QSettings>
-#include <QDateTime>
-#include <QStringList>
 #include <QStandardPaths>
 
 #define REPOS_BASEURL QString ("https://raw.githubusercontent.com/lookitscook/osis-bibles/master")
@@ -52,6 +46,7 @@ signals:
     // for text handling
     void loadTextStarted        ();
     void loadTextFinished       ();
+    void currentTextChanged     (QString textKey);
     void textsModelLoaded       (QVariantList items);
     void textItemUpdated        (QString textKey, QVariantMap item);
 
