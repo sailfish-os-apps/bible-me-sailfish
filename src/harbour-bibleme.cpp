@@ -8,7 +8,15 @@
 
 #include <sailfishapp.h>
 
+#include <QQmlObjectListModel>
+#include <QQmlVariantListModel>
+
 #include "BibleEngine.h"
+#include "BibleWorker.h"
+#include "BibleText.h"
+#include "BibleBook.h"
+#include "BibleChapter.h"
+#include "BibleVerse.h"
 
 #define QML_MODULE "harbour.bibleme.myPrivateImports", 1, 0
 

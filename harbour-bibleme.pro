@@ -3,9 +3,16 @@
 
 TARGET       = harbour-bibleme
 TEMPLATE     = app
-QT          += core network sql gui qml quick
+
+QT          += core network gui qml quick
+
+MOC_DIR      = _moc
+OBJECTS_DIR  = _obj
+RCC_DIR      = _rcc
+
 INCLUDEPATH += \
-    src/libQtQmlTricks \
+    $$PWD/src/libQtOsisBibleEngine \
+    $$PWD/src/libQtQmlTricks \
     /usr/include/sailfishapp
 
 ############### SOURCES & CONTENT #####################
@@ -15,7 +22,12 @@ SOURCES     += \
     src/libQtQmlTricks/qqmlvariantlistmodel.cpp \
     src/libQtQmlTricks/qqmlobjectlistmodel.cpp \
     src/libQtQmlTricks/qqmlhelpers.cpp \
-    src/BibleEngine.cpp
+    src/libQtOsisBibleEngine/BibleEngine.cpp \
+    src/libQtOsisBibleEngine/BibleText.cpp \
+    src/libQtOsisBibleEngine/BibleBook.cpp \
+    src/libQtOsisBibleEngine/BibleChapter.cpp \
+    src/libQtOsisBibleEngine/BibleVerse.cpp \
+    src/libQtOsisBibleEngine/BibleWorker.cpp
 
 HEADERS     += \
     src/libQtQmlTricks/qqmlvariantlistmodel_p.h \
@@ -24,7 +36,12 @@ HEADERS     += \
     src/libQtQmlTricks/qqmlobjectlistmodel.h \
     src/libQtQmlTricks/qqmlmodels.h \
     src/libQtQmlTricks/qqmlhelpers.h \
-    src/BibleEngine.h
+    src/libQtOsisBibleEngine/BibleEngine.h \
+    src/libQtOsisBibleEngine/BibleText.h \
+    src/libQtOsisBibleEngine/BibleBook.h \
+    src/libQtOsisBibleEngine/BibleChapter.h \
+    src/libQtOsisBibleEngine/BibleVerse.h \
+    src/libQtOsisBibleEngine/BibleWorker.h
 
 OTHER_FILES += \
     harbour-bibleme.desktop \
@@ -32,16 +49,13 @@ OTHER_FILES += \
     harbour-bibleme.svg \
     rpm/harbour-bibleme.yaml \
     qml/harbour-bibleme.qml \
-    qml/Ajax.js \
-    qml/cover/* \
-    qml/components/* \
-    qml/img/* \
     qml/pages/BookmarksPage.qml \
     qml/pages/SearchPage.qml \
     qml/pages/SelectPage.qml \
     qml/pages/FilesPage.qml \
     qml/pages/ViewPage.qml \
-    qml/pages/SettingsPage.qml
+    qml/pages/SettingsPage.qml \
+    qml/cover/CoverPage.qml
 
 RESOURCES   += \
     data.qrc
