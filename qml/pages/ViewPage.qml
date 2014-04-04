@@ -28,6 +28,7 @@ Page {
     }
     SilicaListView {
         id: view;
+        onCountChanged: { repositionView (); }
         enabled: !busy.visible;
         opacity: (enabled ? 1.0 : 0.35);
         anchors.fill: parent;

@@ -30,11 +30,11 @@ public slots:
     void doDownloadText    (QString langId, QString bibleId);
     void doRemoveText      (QString textKey);
     void doLoadText        (QString textKey);
-    void doLoadBook        (QString bookId);
-    void doLoadChapter     (QString chapterId);
+    void doLoadBook        (QString bookId, bool force = false);
+    void doLoadChapter     (QString chapterId, bool force = false);
     void doSearchVerse     (QString searchToken);
     void doSaveCurrPosId   (QString currPosId);
-    void doNavigateToRefId (QString refId);
+    void doNavigateToRefId (QString refId, bool force = false);
 
 signals:
     // for texts index

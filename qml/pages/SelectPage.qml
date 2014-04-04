@@ -140,7 +140,10 @@ Page {
                         left: parent.left;
                         right: parent.right;
                     }
-                    onClicked: { bibleEngine.setCurrentVerse (model.verseId); }
+                    onClicked: {
+                        bibleEngine.setCurrentVerse (model.verseId);
+                        pageStack.navigateBack ();
+                    }
 
                     Label {
                         text: formatReference (model.verseId, true);

@@ -50,12 +50,12 @@ public:
     Q_INVOKABLE void requestIndex    ();
     Q_INVOKABLE void requestText     (QString langId, QString bibleId);
     Q_INVOKABLE void loadText        (QString key);
-    Q_INVOKABLE void loadBook        (QString bookId);
-    Q_INVOKABLE void loadChapter     (QString chapterId);
+    Q_INVOKABLE void loadBook        (QString bookId, bool force = false);
+    Q_INVOKABLE void loadChapter     (QString chapterId, bool force = false);
     Q_INVOKABLE void removeText      (QString key);
     Q_INVOKABLE void reloadIndex     ();
     Q_INVOKABLE void searchInText    (QString str);
-    Q_INVOKABLE void setCurrentVerse (QString verseId);
+    Q_INVOKABLE void setCurrentVerse (QString verseId, bool force = false);
 
     bool getConnection () const;
 
@@ -67,9 +67,9 @@ signals:
     void loadIndexRequested       ();
     void loadTextRequested        (QString textKey);
     void removeTextRequested      (QString textKey);
-    void loadBookRequested        (QString bookId);
-    void loadChapterRequested     (QString chapterId);
-    void setCurrentVerseRequested (QString verseId);
+    void loadBookRequested        (QString bookId,    bool force = false);
+    void loadChapterRequested     (QString chapterId, bool force = false);
+    void setCurrentVerseRequested (QString verseId,   bool force = false);
 
 protected slots:
     void saveTextFontSize       (qreal textFontSize);
