@@ -65,6 +65,14 @@ CoverBackground {
                 activate ();
             }
         }
+        CoverAction {
+            iconSource: "image://theme/icon-cover-location";
+            onTriggered: {
+                pageStack.navigateBack (PageStackAction.Immediate);
+                pageStack.push (selectPage);
+                activate ();
+            }
+        }
     }
 }
 

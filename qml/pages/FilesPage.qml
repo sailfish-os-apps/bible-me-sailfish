@@ -136,7 +136,7 @@ Page {
                 Label {
                     id: lblStatus;
                     text: (itemText.bibleText.isLoading
-                           ? qsTr ("(%1%)").arg ((itemText.bibleText.percent * 100).toFixed ())
+                           ? qsTr ("(%1%)").arg (itemText.bibleText.percent)
                            : "");
                     visible: (text !== "");
                     color: Theme.secondaryColor;
