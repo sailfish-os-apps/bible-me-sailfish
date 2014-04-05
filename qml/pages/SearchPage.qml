@@ -73,7 +73,7 @@ Page {
                     }
 
                     Label {
-                        text: model.verseId;
+                        text: formatReference (model.verseId);
                         color: Theme.primaryColor;
                         textFormat: Text.PlainText;
                         horizontalAlignment: Text.AlignLeft;

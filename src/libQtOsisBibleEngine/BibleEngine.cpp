@@ -12,6 +12,8 @@
 #include <QStringList>
 //#include <QDebug>
 
+#define USE_OLD_QT_CONNECT
+
 /*************************** ENGINE *******************************/
 
 BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
@@ -52,6 +54,7 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
     dataDir.mkpath (DATADIR_PATH);
 
     m_confMan            = new QNetworkConfigurationManager          (this);
+
     m_modelTexts         = QQmlObjectListModel::create<BibleText>    (this);
     m_modelBooks         = QQmlObjectListModel::create<BibleBook>    (this);
     m_modelChapters      = QQmlObjectListModel::create<BibleChapter> (this);
@@ -60,8 +63,11 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
     m_modelSearchResults = QQmlObjectListModel::create<BibleVerse>   (this);
 
     m_thread = new QThread (this);
+
     m_worker = new BibleWorker;
     m_worker->moveToThread (m_thread);
+
+#ifndef USE_OLD_QT_CONNECT
 
     connect (m_confMan, &QNetworkConfigurationManager::onlineStateChanged, this,     &BibleEngine::hasConnectionChanged);
     connect (this,      &BibleEngine::showLocalOnlyChanged,                this,     &BibleEngine::saveShowLocalOnly);
@@ -98,6 +104,47 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
     connect (m_worker,  &BibleWorker::bookmarkAdded,                       this,     &BibleEngine::onBookmarkAdded);
     connect (m_worker,  &BibleWorker::bookmarksLoaded,                     this,     &BibleEngine::onBookmarksLoaded);
     connect (m_worker,  &BibleWorker::bookmarkRemoved,                     this,     &BibleEngine::onBookmarkRemoved);
+
+#else
+
+    connect (m_confMan, SIGNAL(onlineStateChanged(bool)),               this,     SIGNAL(hasConnectionChanged(bool)));
+    connect (this,      SIGNAL(showLocalOnlyChanged(bool)),             this,     SLOT(saveShowLocalOnly(bool)));
+    connect (this,      SIGNAL(textFontSizeChanged(qreal)),             this,     SLOT(saveTextFontSize(qreal)));
+    connect (m_thread,  SIGNAL(started()),                              m_worker, SLOT(doInit()));
+
+    connect (this,      SIGNAL(searchRequested(QString)),               m_worker, SLOT(doSearchVerse(QString)));
+    connect (this,      SIGNAL(refreshIndexRequested()),                m_worker, SLOT(doRefreshIndex()));
+    connect (this,      SIGNAL(loadIndexRequested()),                   m_worker, SLOT(doLoadIndex()));
+    connect (this,      SIGNAL(downloadTextRequested(QString,QString)), m_worker, SLOT(doDownloadText(QString,QString)));
+    connect (this,      SIGNAL(loadTextRequested(QString)),             m_worker, SLOT(doLoadText(QString)));
+    connect (this,      SIGNAL(removeTextRequested(QString)),           m_worker, SLOT(doRemoveText(QString)));
+    connect (this,      SIGNAL(loadBookRequested(QString,bool)),        m_worker, SLOT(doLoadBook(QString,bool)));
+    connect (this,      SIGNAL(loadChapterRequested(QString,bool)),     m_worker, SLOT(doLoadChapter(QString,bool)));
+    connect (this,      SIGNAL(setCurrentVerseRequested(QString,bool)), m_worker, SLOT(doNavigateToRefId(QString,bool)));
+    connect (this,      SIGNAL(addBookmarkRequested(QString)),          m_worker, SLOT(doAddBookmark(QString)));
+    connect (this,      SIGNAL(removeBookmarkRequested(QString)),       m_worker, SLOT(doRemoveBookmark(QString)));
+
+    connect (m_worker,  SIGNAL(textsModelLoaded(QVariantList)),         this,     SLOT(onTextsModelLoaded(QVariantList)));
+    connect (m_worker,  SIGNAL(booksModelLoaded(QVariantList)),         this,     SLOT(onBooksModelLoaded(QVariantList)));
+    connect (m_worker,  SIGNAL(chaptersModelLoaded(QVariantList)),      this,     SLOT(onChaptersModelLoaded(QVariantList)));
+    connect (m_worker,  SIGNAL(versesModelLoaded(QVariantList)),        this,     SLOT(onVersesModelLoaded(QVariantList)));
+    connect (m_worker,  SIGNAL(searchStarted()),                        this,     SLOT(onSearchStarted()));
+    connect (m_worker,  SIGNAL(searchResultItem(QVariantMap)),          this,     SLOT(onSearchResultItem(QVariantMap)));
+    connect (m_worker,  SIGNAL(searchFinished()),                       this,     SLOT(onSearchFinished()));
+    connect (m_worker,  SIGNAL(textItemUpdated(QString,QVariantMap)),   this,     SLOT(onTextItemUpdated(QString,QVariantMap)));
+    connect (m_worker,  SIGNAL(loadTextStarted()),                      this,     SLOT(onLoadTextStarted()));
+    connect (m_worker,  SIGNAL(loadTextFinished()),                     this,     SLOT(onLoadTextFinished()));
+    connect (m_worker,  SIGNAL(refreshStarted()),                       this,     SLOT(onRefreshStarted()));
+    connect (m_worker,  SIGNAL(refreshFinished()),                      this,     SLOT(onRefreshFinished()));
+    connect (m_worker,  SIGNAL(bookmarkAdded(QVariantMap)),             this,     SLOT(onBookmarkAdded(QVariantMap)));
+    connect (m_worker,  SIGNAL(bookmarksLoaded(QVariantList)),          this,     SLOT(onBookmarksLoaded(QVariantList)));
+    connect (m_worker,  SIGNAL(bookmarkRemoved(QString)),               this,     SLOT(onBookmarkRemoved(QString)));
+
+    connect (m_worker,  &BibleWorker::currentPositionChanged,              this,     &BibleEngine::update_currentPositionId);
+    connect (m_worker,  &BibleWorker::searchPercentUpdated,                this,     &BibleEngine::update_searchPercent);
+    connect (m_worker,  &BibleWorker::currentTextChanged,                  this,     &BibleEngine::update_currentTextKey);
+
+#endif
 
     m_thread->start ();
 }
@@ -222,15 +269,18 @@ void BibleEngine::onVersesModelLoaded (QVariantList items) {
 }
 
 void BibleEngine::onSearchStarted () {
+    //qDebug () << "BibleEngine::onSearchStarted";
     update_isSearching (true);
     m_modelSearchResults->clear ();
 }
 
 void BibleEngine::onSearchResultItem (QVariantMap verse) {
+    //qDebug () << "BibleEngine::onSearchResultItem" << verse;
     m_modelSearchResults->append (BibleVerse::fromQtVariant (verse));
 }
 
 void BibleEngine::onSearchFinished () {
+    //qDebug () << "BibleEngine::onSearchFinished";
     update_isSearching (false);
 }
 
@@ -272,22 +322,27 @@ void BibleEngine::onBookmarkRemoved (QString verseId) {
 }
 
 void BibleEngine::onLoadTextStarted () {
+    //qDebug () << "BibleEngine::onLoadTextStarted";
     update_isLoading (true);
 }
 
 void BibleEngine::onLoadTextFinished () {
+    //qDebug () << "BibleEngine::onLoadTextFinished";
     update_isLoading (false);
 }
 
 void BibleEngine::onRefreshStarted () {
+    //qDebug () << "BibleEngine::onRefreshStarted";
     update_isFetching (true);
 }
 
 void BibleEngine::onRefreshFinished () {
+    //qDebug () << "BibleEngine::onRefreshFinished";
     update_isFetching (false);
 }
 
 void BibleEngine::onTextItemUpdated (QString textKey, QVariantMap item) {
+    //qDebug () << "BibleEngine::onTextItemUpdated";
     BibleText * text = m_indexTexts.value (textKey, NULL);
     if (text) {
         text->updateWithQtVariant (item);

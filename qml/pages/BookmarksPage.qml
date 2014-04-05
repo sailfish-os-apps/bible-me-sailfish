@@ -28,11 +28,9 @@ Page {
     SilicaListView {
         id: view;
         clip: true;
-        enabled: !busy.visible;
-        opacity: (enabled ? 1.0 : 0.35);
         anchors.fill: parent;
         anchors.topMargin: header.height;
-        model: (bibleEngine.modelBookmarks);
+        model: bibleEngine.modelBookmarks;
         delegate:Component {
             ListItem {
                 id: itemVerse;
@@ -64,7 +62,7 @@ Page {
                     }
 
                     Label {
-                        text: model.verseId;
+                        text: formatReference (model.verseId);
                         color: Theme.primaryColor;
                         textFormat: Text.PlainText;
                         horizontalAlignment: Text.AlignLeft;

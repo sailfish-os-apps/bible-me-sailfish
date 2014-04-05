@@ -108,7 +108,7 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr ("Settings...");
+                text: qsTr ("Settings");
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (settingsPage);
@@ -116,7 +116,7 @@ Page {
                 }
             }
             MenuItem {
-                text: qsTr ("Bible version...");
+                text: qsTr ("Bible version");
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (filesPage);
@@ -124,7 +124,7 @@ Page {
                 }
             }
             MenuItem {
-                text: qsTr ("My bookmarks...");
+                text: qsTr ("My bookmarks");
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (bookmarksPage);
@@ -132,7 +132,7 @@ Page {
                 }
             }
             MenuItem {
-                text: qsTr ("Search...");
+                text: qsTr ("Search");
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (searchPage);
