@@ -35,6 +35,8 @@ public slots:
     void doSearchVerse     (QString searchToken);
     void doSaveCurrPosId   (QString currPosId);
     void doNavigateToRefId (QString refId, bool force = false);
+    void doAddBookmark     (QString verseId);
+    void doRemoveBookmark  (QString verseId);
 
 signals:
     // for texts index
@@ -62,12 +64,18 @@ signals:
     void searchPercentUpdated   (int         percent);
     void searchFinished         ();
 
+    // for bookmarks
+    void bookmarksLoaded        (QVariantList items);
+    void bookmarkAdded          (QVariantMap  item);
+    void bookmarkRemoved        (QString      verseId);
+
 protected:
     QString canonize (const QString & str);
 
     BibleText    * getBibleTextFromKey   (QString textKey)   const;
     BibleBook    * getBibleBookFromId    (QString bookId)    const;
     BibleChapter * getBibleChapterFromId (QString chapterId) const;
+    BibleVerse   * getBibleVerseFromId   (QString verseId)   const;
 
 private slots:
     void onIndexRequestFinished ();
@@ -81,6 +89,7 @@ private:
     QString                 m_currVerseId;
     QNetworkAccessManager * m_nam;
     QSettings             * m_settings;
+    QStringList             m_bookmarksList;
     QRegularExpression      m_regxpSpace;
     QRegularExpression      m_regxpValid;
     QList<BibleText    *>   m_listBibleTexts;    // text = lang, title, hasLocal, isLoading, percent

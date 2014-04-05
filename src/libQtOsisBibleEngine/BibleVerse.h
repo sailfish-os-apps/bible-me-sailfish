@@ -9,6 +9,7 @@
 
 class BibleVerse : public QObject {
     Q_OBJECT
+    QML_READONLY_PROPERTY (bool,       marked)
     QML_READONLY_PROPERTY (QByteArray, verseId)
     QML_READONLY_PROPERTY (QString,    textContent)
 

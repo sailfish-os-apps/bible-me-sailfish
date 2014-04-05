@@ -16,13 +16,13 @@
 
 BibleWorker::BibleWorker (QObject * parent) : QObject (parent) {
     m_nam = new QNetworkAccessManager (this);
-    QSettings::setDefaultFormat (QSettings::IniFormat);
     m_settings = new QSettings (this);
     m_regxpSpace = QRegularExpression ("\\s+");
     m_regxpValid = QRegularExpression ("[^abcdefghijlkmnopqrstuvwxyz0123456789'\\s]");
 
-    m_currTextKey = m_settings->value ("currentTextKey").toString ();
-    m_currVerseId = m_settings->value ("currPosId").toString ();
+    m_currTextKey   = m_settings->value ("currentTextKey").toString ();
+    m_currVerseId   = m_settings->value ("currPosId").toString ();
+    m_bookmarksList = m_settings->value ("bookmarks").toStringList ();
 }
 
 QString BibleWorker::canonize (const QString & str) {
@@ -58,6 +58,15 @@ BibleChapter * BibleWorker::getBibleChapterFromId (QString chapterId) const {
     int idx = m_hashChapterIndex.value (chapterId.toLocal8Bit (), -1);
     if (idx >= 0 && idx < m_listBibleChapters.size ()) {
         ret = m_listBibleChapters.at (idx);
+    }
+    return ret;
+}
+
+BibleVerse * BibleWorker::getBibleVerseFromId (QString verseId) const {
+    BibleVerse * ret = NULL;
+    int idx = m_hashVerseIndex.value (verseId.toLocal8Bit (), -1);
+    if (idx >= 0 && idx < m_listBibleVerses.size ()) {
+        ret = m_listBibleVerses.at (idx);
     }
     return ret;
 }
@@ -307,11 +316,21 @@ void BibleWorker::doLoadText (QString textKey) {
         fileText.close ();
     }
 
-    QVariantList ret;
-    foreach (BibleBook * book, m_listBibleBooks) {
-        ret.append (book->toQtVariant ());
+    QVariantList bookmarks;
+    foreach (QString verseId, m_bookmarksList) {
+        BibleVerse * verse = getBibleVerseFromId (verseId);
+        if (verse) {
+            verse->update_marked (true);
+            bookmarks.append (verse->toQtVariant ());
+        }
     }
-    emit booksModelLoaded    (ret);
+    emit bookmarksLoaded (bookmarks);
+
+    QVariantList books;
+    foreach (BibleBook * book, m_listBibleBooks) {
+        books.append (book->toQtVariant ());
+    }
+    emit booksModelLoaded    (books);
 
     emit currentTextChanged (m_currTextKey);
 
@@ -350,6 +369,28 @@ void BibleWorker::doNavigateToRefId (QString refId, bool force) {
         QString versId = QString::fromLocal8Bit (tmp);
         doSaveCurrPosId (versId);
     }
+}
+
+void BibleWorker::doAddBookmark (QString verseId) {
+    qDebug () << "BibleWorker::doAddBookmark" << verseId;
+    m_bookmarksList.append (verseId);
+    m_settings->setValue ("bookmarks", m_bookmarksList);
+    BibleVerse * verse = getBibleVerseFromId (verseId);
+    if (verse) {
+        verse->update_marked (true);
+        emit bookmarkAdded (verse->toQtVariant ()); // FIXME : what if verse is not in current version of bible ?
+    }
+}
+
+void BibleWorker::doRemoveBookmark (QString verseId) {
+    qDebug () << "BibleWorker::doRemoveBookmark" << verseId;
+    m_bookmarksList.removeAll (verseId);
+    m_settings->setValue ("bookmarks", m_bookmarksList);
+    BibleVerse * verse = getBibleVerseFromId (verseId);
+    if (verse) {
+        verse->update_marked (false);
+    }
+    emit bookmarkRemoved (verseId);
 }
 
 void BibleWorker::doSaveCurrPosId (QString currPosId) {

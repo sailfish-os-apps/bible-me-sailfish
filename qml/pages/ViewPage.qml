@@ -64,12 +64,17 @@ Page {
                             text: qsTr ("Copy reference");
                             onClicked: { Clipboard.text = model.verseId; }
                         }
-//                        MenuItem {
-//                            text: qsTr ("Add to bookmarks");
-//                            onClicked: {
-//                                // TODO
-//                            }
-//                        }
+                        MenuItem {
+                            text: (model.marked ? qsTr ("Remove from bookmarks") : qsTr ("Add to bookmarks"));
+                            onClicked: {
+                                if (model.marked) {
+                                    bibleEngine.removeBookmark (model.verseId);
+                                }
+                                else {
+                                    bibleEngine.addBookmark (model.verseId);
+                                }
+                            }
+                        }
                     }
                 }
                 anchors {
@@ -86,7 +91,7 @@ Page {
                     textFormat: Text.StyledText;
                     horizontalAlignment: Text.AlignJustify;
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                    color: (isCurrent ? Theme.highlightColor : Theme.primaryColor);
+                    color: (isCurrent ? Theme.highlightColor : (model.marked ? Theme.secondaryHighlightColor : Theme.primaryColor));
                     font {
                         family: Theme.fontFamilyHeading;
                         pixelSize: bibleEngine.textFontSize;
@@ -103,14 +108,6 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr ("Switch Bible version...");
-                font.family: Theme.fontFamilyHeading;
-                onClicked: {
-                    pageStack.pushAttached (filesPage);
-                    pageStack.navigateForward ();
-                }
-            }
-            MenuItem {
                 text: qsTr ("Settings...");
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
@@ -118,14 +115,22 @@ Page {
                     pageStack.navigateForward ();
                 }
             }
-//            MenuItem {
-//                text: qsTr ("My bookmarks...");
-//                font.family: Theme.fontFamilyHeading;
-//                onClicked: {
-//                    pageStack.pushAttached (bookmarksPage);
-//                    pageStack.navigateForward ();
-//                }
-//            }
+            MenuItem {
+                text: qsTr ("Bible version...");
+                font.family: Theme.fontFamilyHeading;
+                onClicked: {
+                    pageStack.pushAttached (filesPage);
+                    pageStack.navigateForward ();
+                }
+            }
+            MenuItem {
+                text: qsTr ("My bookmarks...");
+                font.family: Theme.fontFamilyHeading;
+                onClicked: {
+                    pageStack.pushAttached (bookmarksPage);
+                    pageStack.navigateForward ();
+                }
+            }
             MenuItem {
                 text: qsTr ("Search...");
                 font.family: Theme.fontFamilyHeading;

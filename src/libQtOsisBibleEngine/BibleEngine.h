@@ -39,9 +39,8 @@ class BibleEngine : public QObject {
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelBooks)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelChapters)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelVerses)
+    QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelBookmarks)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelSearchResults)
-
-    //QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelBookmarks)
 
 public:
     explicit BibleEngine  (QObject * parent = NULL);
@@ -56,6 +55,8 @@ public:
     Q_INVOKABLE void reloadIndex     ();
     Q_INVOKABLE void searchInText    (QString str);
     Q_INVOKABLE void setCurrentVerse (QString verseId, bool force = false);
+    Q_INVOKABLE void addBookmark     (QString verseId);
+    Q_INVOKABLE void removeBookmark  (QString verseId);
 
     bool getConnection () const;
 
@@ -70,6 +71,8 @@ signals:
     void loadBookRequested        (QString bookId,    bool force = false);
     void loadChapterRequested     (QString chapterId, bool force = false);
     void setCurrentVerseRequested (QString verseId,   bool force = false);
+    void addBookmarkRequested     (QString verseId);
+    void removeBookmarkRequested  (QString verseId);
 
 protected slots:
     void saveTextFontSize       (qreal textFontSize);
@@ -85,6 +88,10 @@ private slots:
     void onSearchResultItem       (QVariantMap verse);
     void onSearchFinished         ();
 
+    void onBookmarksLoaded        (QVariantList items);
+    void onBookmarkAdded          (QVariantMap  item);
+    void onBookmarkRemoved        (QString      verseId);
+
     void onLoadTextStarted        ();
     void onLoadTextFinished       ();
 
@@ -94,6 +101,7 @@ private slots:
     void onTextItemUpdated     (QString textKey, QVariantMap item);
 
 private:
+    QHash<QString, BibleVerse     *> m_indexVerses;
     QHash<QString, BibleText      *> m_indexTexts;
     QThread                        * m_thread;
     BibleWorker                    * m_worker;

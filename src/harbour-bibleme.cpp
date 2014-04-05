@@ -23,7 +23,8 @@
 
 #define QML_MODULE "harbour.bibleme.myPrivateImports", 1, 0
 
-int main (int argc, char * argv []){
+int main (int argc, char * argv []) {
+    QSettings::setDefaultFormat (QSettings::IniFormat);
     qmlRegisterUncreatableType<QAbstractItemModel>    (QML_MODULE, "AbstractItemModel",  "!!!");
     qmlRegisterUncreatableType<QAbstractListModel>    (QML_MODULE, "AbstractListModel",  "!!!");
     qmlRegisterUncreatableType<QQmlObjectListModel>   (QML_MODULE, "ObjectListModel",    "!!!");

@@ -8,7 +8,5 @@
         <file>qml/pages/SelectPage.qml</file>
         <file>qml/pages/ViewPage.qml</file>
         <file>qml/pages/SettingsPage.qml</file>
-        <file>harbour-bibleme.svg</file>
-        <file>harbour-bibleme.png</file>
     </qresource>
 </RCC>

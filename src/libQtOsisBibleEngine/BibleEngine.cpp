@@ -10,8 +10,7 @@
 #include <QDir>
 #include <QDateTime>
 #include <QStringList>
-#include <QStandardPaths>
-#include <QDebug>
+//#include <QDebug>
 
 /*************************** ENGINE *******************************/
 
@@ -22,9 +21,12 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
     m_isLoading   = false;
     m_searchPercent = 0.0;
 
-    QSettings::setDefaultFormat (QSettings::IniFormat);
     m_settings = new QSettings (this);
     m_settings->setValue ("lastStart", QDateTime::currentMSecsSinceEpoch ());
+
+    if (!m_settings->contains ("bookmarks")) {
+        m_settings->setValue ("bookmarks", QStringList ());
+    }
 
     if (!m_settings->contains ("textFontSize")) {
         m_settings->setValue ("textFontSize", 32);
@@ -54,11 +56,12 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
     m_modelBooks         = QQmlObjectListModel::create<BibleBook>    (this);
     m_modelChapters      = QQmlObjectListModel::create<BibleChapter> (this);
     m_modelVerses        = QQmlObjectListModel::create<BibleVerse>   (this);
-    //m_modelBookmarks     = QQmlObjectListModel::create<BibleVerse>   (this);
+    m_modelBookmarks     = QQmlObjectListModel::create<BibleVerse>   (this);
     m_modelSearchResults = QQmlObjectListModel::create<BibleVerse>   (this);
 
     m_thread = new QThread (this);
     m_worker = new BibleWorker;
+    m_worker->moveToThread (m_thread);
 
     connect (m_confMan, &QNetworkConfigurationManager::onlineStateChanged, this,     &BibleEngine::hasConnectionChanged);
     connect (this,      &BibleEngine::showLocalOnlyChanged,                this,     &BibleEngine::saveShowLocalOnly);
@@ -74,6 +77,8 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
     connect (this,      &BibleEngine::loadBookRequested,                   m_worker, &BibleWorker::doLoadBook);
     connect (this,      &BibleEngine::loadChapterRequested,                m_worker, &BibleWorker::doLoadChapter);
     connect (this,      &BibleEngine::setCurrentVerseRequested,            m_worker, &BibleWorker::doNavigateToRefId);
+    connect (this,      &BibleEngine::addBookmarkRequested,                m_worker, &BibleWorker::doAddBookmark);
+    connect (this,      &BibleEngine::removeBookmark,                      m_worker, &BibleWorker::doRemoveBookmark);
 
     connect (m_worker,  &BibleWorker::textsModelLoaded,                    this,     &BibleEngine::onTextsModelLoaded);
     connect (m_worker,  &BibleWorker::booksModelLoaded,                    this,     &BibleEngine::onBooksModelLoaded);
@@ -90,8 +95,10 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
     connect (m_worker,  &BibleWorker::loadTextFinished,                    this,     &BibleEngine::onLoadTextFinished);
     connect (m_worker,  &BibleWorker::refreshStarted,                      this,     &BibleEngine::onRefreshStarted);
     connect (m_worker,  &BibleWorker::refreshFinished,                     this,     &BibleEngine::onRefreshFinished);
+    connect (m_worker,  &BibleWorker::bookmarkAdded,                       this,     &BibleEngine::onBookmarkAdded);
+    connect (m_worker,  &BibleWorker::bookmarksLoaded,                     this,     &BibleEngine::onBookmarksLoaded);
+    connect (m_worker,  &BibleWorker::bookmarkRemoved,                     this,     &BibleEngine::onBookmarkRemoved);
 
-    m_worker->moveToThread (m_thread);
     m_thread->start ();
 }
 
@@ -105,62 +112,72 @@ bool BibleEngine::getConnection () const {
 }
 
 void BibleEngine::requestIndex () {
-    qDebug () << "BibleEngine::requestIndex";
+    //qDebug () << "BibleEngine::requestIndex";
     emit refreshIndexRequested ();
 }
 
 void BibleEngine::requestText (QString langId, QString bibleId) {
-    qDebug () << "BibleEngine::requestText" << langId << bibleId;
+    //qDebug () << "BibleEngine::requestText" << langId << bibleId;
     emit downloadTextRequested (langId, bibleId);
 }
 
 void BibleEngine::removeText (QString key) {
-    qDebug () << "BibleEngine::removeText" << key;
+    //qDebug () << "BibleEngine::removeText" << key;
     emit removeTextRequested (key);
 }
 
 void BibleEngine::reloadIndex () {
-    qDebug () << "BibleEngine::reloadIndex";
+    //qDebug () << "BibleEngine::reloadIndex";
     emit loadIndexRequested ();
 }
 
 void BibleEngine::searchInText (QString str) {
-    qDebug () << "BibleEngine::searchInText" << str;
+    //qDebug () << "BibleEngine::searchInText" << str;
     emit searchRequested (str);
 }
 
 void BibleEngine::setCurrentVerse (QString verseId, bool force) {
-    qDebug () << "BibleEngine::setCurrentVerse" << verseId << force;
+    //qDebug () << "BibleEngine::setCurrentVerse" << verseId << force;
     emit setCurrentVerseRequested (verseId, force);
 }
 
+void BibleEngine::addBookmark (QString verseId) {
+    //qDebug () << "BibleEngine::addBookmark" << verseId;
+    emit addBookmarkRequested (verseId);
+}
+
+void BibleEngine::removeBookmark (QString verseId){
+    //qDebug () << "BibleEngine::removeBookmark" << verseId;
+    emit removeBookmarkRequested (verseId);
+}
+
 void BibleEngine::loadText (QString key) {
-    qDebug () << "BibleEngine::loadText" << key;
+    //qDebug () << "BibleEngine::loadText" << key;
     emit loadTextRequested (key);
 }
 
 void BibleEngine::loadBook (QString bookId, bool force) {
-    qDebug () << "BibleEngine::loadBook" << bookId << force;
+    //qDebug () << "BibleEngine::loadBook" << bookId << force;
     emit loadBookRequested (bookId, force);
 }
 
 void BibleEngine::loadChapter (QString chapterId, bool force) {
-    qDebug () << "BibleEngine::loadChapter" << chapterId << force;
+    //qDebug () << "BibleEngine::loadChapter" << chapterId << force;
     emit loadChapterRequested (chapterId, force);
 }
 
 void BibleEngine::saveTextFontSize (qreal textFontSize) {
-    qDebug () << "BibleEngine::saveTextFontSize" << textFontSize;
+    //qDebug () << "BibleEngine::saveTextFontSize" << textFontSize;
     m_settings->setValue ("textFontSize", textFontSize);
 }
 
 void BibleEngine::saveShowLocalOnly (bool showLocalOnly) {
-    qDebug () << "BibleEngine::saveShowLocalOnly" << showLocalOnly;
+    //qDebug () << "BibleEngine::saveShowLocalOnly" << showLocalOnly;
     m_settings->setValue ("showLocalOnly", showLocalOnly);
 }
 
 void BibleEngine::onTextsModelLoaded (QVariantList items) {
-    qDebug () << "BibleEngine::onTextsModelLoaded" << items;
+    //qDebug () << "BibleEngine::onTextsModelLoaded" << items;
     m_indexTexts.clear ();
     m_modelTexts->clear ();
     foreach (QVariant variant, items) {
@@ -176,7 +193,7 @@ void BibleEngine::onTextsModelLoaded (QVariantList items) {
 }
 
 void BibleEngine::onBooksModelLoaded (QVariantList items) {
-    qDebug () << "BibleEngine::onBooksModelLoaded" << items.count ();
+    //qDebug () << "BibleEngine::onBooksModelLoaded" << items.count ();
     m_modelBooks->clear ();
     foreach (QVariant variant, items) {
         BibleBook * book = BibleBook::fromQtVariant (variant.toMap ());
@@ -185,7 +202,7 @@ void BibleEngine::onBooksModelLoaded (QVariantList items) {
 }
 
 void BibleEngine::onChaptersModelLoaded (QVariantList items) {
-    qDebug () << "BibleEngine::onChaptersModelLoaded" << items.count ();
+    //qDebug () << "BibleEngine::onChaptersModelLoaded" << items.count ();
     m_modelChapters->clear ();
     foreach (QVariant variant, items) {
         BibleChapter * chapter = BibleChapter::fromQtVariant (variant.toMap ());
@@ -194,11 +211,13 @@ void BibleEngine::onChaptersModelLoaded (QVariantList items) {
 }
 
 void BibleEngine::onVersesModelLoaded (QVariantList items) {
-    qDebug () << "BibleEngine::onVersesModelLoaded" << items.count ();
+    //qDebug () << "BibleEngine::onVersesModelLoaded" << items.count ();
+    m_indexVerses.clear ();
     m_modelVerses->clear ();
     foreach (QVariant variant, items) {
         BibleVerse * verse = BibleVerse::fromQtVariant (variant.toMap ());
         m_modelVerses->append (verse);
+        m_indexVerses.insert (verse->get_verseId (), verse);
     }
 }
 
@@ -213,6 +232,43 @@ void BibleEngine::onSearchResultItem (QVariantMap verse) {
 
 void BibleEngine::onSearchFinished () {
     update_isSearching (false);
+}
+
+void BibleEngine::onBookmarksLoaded (QVariantList items) {
+    //qDebug () << "BibleEngine::onBookmarksLoaded" << items.count ();
+    m_modelBookmarks->clear ();
+    foreach (QVariant variant, items) {
+        BibleVerse * bookmark = BibleVerse::fromQtVariant (variant.toMap ());
+        m_modelBookmarks->append (bookmark);
+        BibleVerse * verse = m_indexVerses.value (bookmark->get_verseId (), NULL);
+        if (verse) {
+            verse->update_marked (true);
+        }
+    }
+}
+
+void BibleEngine::onBookmarkAdded (QVariantMap item) {
+    //qDebug () << "BibleEngine::onBookmarkAdded" << item;
+    BibleVerse * bookmark = BibleVerse::fromQtVariant (item);
+    m_modelBookmarks->append (bookmark);
+    BibleVerse * verse = m_indexVerses.value (bookmark->get_verseId (), NULL);
+    if (verse) {
+        verse->update_marked (true);
+    }
+}
+
+void BibleEngine::onBookmarkRemoved (QString verseId) {
+    //qDebug () << "BibleEngine::onBookmarkRemoved" << verseId;
+    for (int idx = 0; idx < m_modelBookmarks->count (); idx++) {
+        if (m_modelBookmarks->get (idx)->property ("verseId") == verseId) {
+            m_modelBookmarks->remove (idx);
+            break;
+        }
+    }
+    BibleVerse * verse = m_indexVerses.value (verseId, NULL);
+    if (verse) {
+        verse->update_marked (false);
+    }
 }
 
 void BibleEngine::onLoadTextStarted () {
