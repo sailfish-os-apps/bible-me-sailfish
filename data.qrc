@@ -8,5 +8,8 @@
         <file>qml/pages/SelectPage.qml</file>
         <file>qml/pages/ViewPage.qml</file>
         <file>qml/pages/SettingsPage.qml</file>
+        <file>lang/en.qm</file>
+        <file>lang/fr.qm</file>
+        <file>lang/fi.qm</file>
     </qresource>
 </RCC>

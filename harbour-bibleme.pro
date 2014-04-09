@@ -72,3 +72,23 @@ desktop.path  = /usr/share/applications
 icon.files    = $${TARGET}.png
 icon.path     = /usr/share/icons/hicolor/86x86/apps
 INSTALLS     += target desktop icon
+
+################ LOCALIZATION ########################
+
+TRANSLATIONS += \
+    lang/en.ts \
+    lang/fr.ts \
+    lang/fi.ts
+
+qt_linguist_only {
+SOURCES += \
+    qml/harbour-bibleme.qml \
+    qml/pages/BookmarksPage.qml \
+    qml/pages/SearchPage.qml \
+    qml/pages/SelectPage.qml \
+    qml/pages/FilesPage.qml \
+    qml/pages/ViewPage.qml \
+    qml/pages/SettingsPage.qml \
+    qml/cover/CoverPage.qml
+}
+
