@@ -16,6 +16,7 @@ class BibleText : public QObject {
     QML_READONLY_PROPERTY (QString,    bibleTitle)
     QML_READONLY_PROPERTY (QByteArray, languageID)
     QML_READONLY_PROPERTY (QByteArray, bibleID)
+    QML_READONLY_PROPERTY (QByteArray, textKey)
 
 public:
     explicit BibleText (QObject * parent = NULL);

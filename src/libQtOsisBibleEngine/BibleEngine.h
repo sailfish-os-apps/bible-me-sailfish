@@ -1,4 +1,4 @@
-#ifndef BIBLEENGINE_H
+﻿#ifndef BIBLEENGINE_H
 #define BIBLEENGINE_H
 
 #include <QObject>
@@ -101,12 +101,10 @@ private slots:
     void onTextItemUpdated     (QString textKey, QVariantMap item);
 
 private:
-    QHash<QString, BibleVerse     *> m_indexVerses;
-    QHash<QString, BibleText      *> m_indexTexts;
-    QThread                        * m_thread;
-    BibleWorker                    * m_worker;
-    QSettings                      * m_settings;
-    QNetworkConfigurationManager   * m_confMan;
+    QThread                       * m_thread;
+    BibleWorker                   * m_worker;
+    QSettings                     * m_settings;
+    QNetworkConfigurationManager  * m_confMan;
 };
 
 #endif // BIBLEENGINE_H

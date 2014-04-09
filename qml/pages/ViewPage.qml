@@ -144,7 +144,7 @@ Page {
             MenuItem {
                 text: qsTr ("Go to next chapter");
                 font.family: Theme.fontFamilyHeading;
-                enabled: (currentBookName !== "" && currentChapterIdx > 0 && currentChapterIdx < bibleEngine.modelChapters.count ());
+                enabled: (currentBookName !== "" && currentChapterIdx > 0 && currentChapterIdx < bibleEngine.modelChapters.count);
                 onClicked: {
                     view.positionViewAtBeginning ();
                     bibleEngine.setCurrentVerse ("%1.%2.1".arg (currentBookName).arg (currentChapterIdx +1));

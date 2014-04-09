@@ -4,7 +4,7 @@
 /*************************** BOOK *************************/
 
 BibleBook::BibleBook (QObject * parent) : QObject (parent) {
-    m_bookId          = "";
+    m_bookId          = QByteArrayLiteral ("");
     m_firstChapterIdx = -1;
     m_lastChapterIdx  = -1;
 }
@@ -16,21 +16,21 @@ BibleBook * BibleBook::fromQtVariant (QVariantMap variant, QObject * parent) {
 }
 
 void BibleBook::updateWithQtVariant (QVariantMap variant) {
-    if (variant.contains ("bookId")) {
-        update_bookId (variant.value ("bookId").value<QByteArray> ());
+    if (variant.contains (QStringLiteral ("bookId"))) {
+        update_bookId (variant.value (QStringLiteral ("bookId")).value<QByteArray> ());
     }
-    if (variant.contains ("firstChapterIdx")) {
-        update_firstChapterIdx (variant.value ("firstChapterIdx").value<int> ());
+    if (variant.contains (QStringLiteral ("firstChapterIdx"))) {
+        update_firstChapterIdx (variant.value (QStringLiteral ("firstChapterIdx")).value<int> ());
     }
-    if (variant.contains ("lastChapterIdx")) {
-        update_lastChapterIdx (variant.value ("lastChapterIdx").value<int> ());
+    if (variant.contains (QStringLiteral ("lastChapterIdx"))) {
+        update_lastChapterIdx (variant.value (QStringLiteral ("lastChapterIdx")).value<int> ());
     }
 }
 
 QVariantMap BibleBook::toQtVariant () const {
     QVariantMap ret;
-    ret.insert ("bookId",          m_bookId);
-    ret.insert ("firstChapterIdx", m_firstChapterIdx);
-    ret.insert ("lastChapterIdx",  m_lastChapterIdx);
+    ret.insert (QStringLiteral ("bookId"),          m_bookId);
+    ret.insert (QStringLiteral ("firstChapterIdx"), m_firstChapterIdx);
+    ret.insert (QStringLiteral ("lastChapterIdx"),  m_lastChapterIdx);
     return ret;
 }

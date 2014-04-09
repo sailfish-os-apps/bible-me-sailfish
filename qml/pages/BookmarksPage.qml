@@ -39,7 +39,7 @@ Page {
                     ContextMenu {
                         MenuItem {
                             text: qsTr ("Remove from bookmarks");
-                            onClicked: { bibleEngine.removeBookmark (model.verseId); }
+                            onClicked: { remove (); }
                         }
                     }
                 }
@@ -52,6 +52,16 @@ Page {
                     bibleEngine.setCurrentVerse (model.verseId);
                 }
 
+                function remove () {
+                    var tmp = model.verseId;
+                    remorse.execute (itemVerse,
+                                     qsTr ("Removing"),
+                                     function () {
+                                         bibleEngine.removeBookmark (tmp);
+                                     });
+                }
+
+                RemorseItem { id: remorse; }
                 Column {
                     id: layoutText;
                     anchors {

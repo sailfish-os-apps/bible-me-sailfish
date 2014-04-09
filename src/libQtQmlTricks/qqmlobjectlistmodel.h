@@ -7,20 +7,18 @@ class QQmlObjectListModelPrivate;
 
 class QQmlObjectListModel : public QAbstractListModel {
     Q_OBJECT
+    Q_PROPERTY (int count READ count NOTIFY countChanged)
 
 public: // public factory and casts
-    template <class ItemType>
-    static QQmlObjectListModel * create (QObject * parent = NULL)
+    template <class ItemType> static QQmlObjectListModel * create (QObject * parent = NULL)
     {
         return new QQmlObjectListModel (ItemType::staticMetaObject, parent);
     }
-    template <class ItemType>
-    ItemType* getAs (int idx) const
+    template <class ItemType> ItemType * getAs (int idx) const
     {
         return qobject_cast<ItemType *> (get (idx));
     }
-    template <class ItemType>
-    QList<ItemType *> listAs () const
+    template <class ItemType> QList<ItemType *> listAs () const
     {
         QList<ItemType *> ret;
         for (int idx = 0; idx < count (); idx++) {
@@ -39,8 +37,7 @@ public: // QAbstractItemModel interface reimplemented
     virtual QVariant data (const QModelIndex & index, int role) const;
     virtual QHash<int, QByteArray> roleNames () const;
 
-public
-slots: // public API
+public slots: // public methods API
     void clear ();
     int count () const;
     bool isEmpty () const;
@@ -60,8 +57,13 @@ slots: // public API
     QObject * first () const;
     QObject * last () const;
     QObjectList list () const;
+    QObject * getByUid (QString uid) const;
+    void setRoleNameForUid (QByteArray name);
 
-private:
+signals: // notifiers
+    void countChanged (int count);
+
+private: // pimpl
     QQmlObjectListModelPrivate * m_privateImpl;
 };
 

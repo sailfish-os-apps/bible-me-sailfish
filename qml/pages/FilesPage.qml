@@ -76,7 +76,7 @@ Page {
                 function remove () {
                     var tmp = key;
                     remorse.execute (itemText,
-                                     "Deleting",
+                                     qsTr ("Deleting"),
                                      function () {
                                          bibleEngine.removeText (tmp);
                                      });
