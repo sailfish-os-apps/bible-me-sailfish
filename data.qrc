@@ -11,5 +11,10 @@
         <file>lang/en.qm</file>
         <file>lang/fr.qm</file>
         <file>lang/fi.qm</file>
+        <file>lang/de.ts</file>
+        <file>lang/en.ts</file>
+        <file>lang/fi.ts</file>
+        <file>lang/fr.ts</file>
+        <file>lang/de.qm</file>
     </qresource>
 </RCC>

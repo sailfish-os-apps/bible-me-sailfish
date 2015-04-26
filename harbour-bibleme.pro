@@ -55,7 +55,9 @@ OTHER_FILES += \
     qml/pages/FilesPage.qml \
     qml/pages/ViewPage.qml \
     qml/pages/SettingsPage.qml \
-    qml/cover/CoverPage.qml
+    qml/cover/CoverPage.qml \
+    lang/*.ts \
+    lang/de.ts
 
 RESOURCES   += \
     data.qrc
@@ -78,7 +80,8 @@ INSTALLS     += target desktop icon
 TRANSLATIONS += \
     lang/en.ts \
     lang/fr.ts \
-    lang/fi.ts
+    lang/fi.ts \
+    lang/de.ts
 
 qt_linguist_only {
 SOURCES += \
