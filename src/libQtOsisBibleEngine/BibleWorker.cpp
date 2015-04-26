@@ -181,8 +181,9 @@ void BibleWorker::doDownloadText (QString langId, QString bibleId) {
             text->update_isLoading (true);
             emit textItemUpdated (key, text->toQtVariant ());
         }
-
-        QNetworkReply * reply = m_nam->get (QNetworkRequest (QUrl (QString ("%1/%2/%3.xml").arg (REPOS_BASEURL).arg (langId).arg (bibleId))));
+        QNetworkRequest request (QUrl (QString ("%1/%2/%3.xml").arg (REPOS_BASEURL).arg (langId).arg (bibleId)));
+        request.setRawHeader("Accept-Encoding", "identity");
+        QNetworkReply * reply = m_nam->get (request);
         reply->setProperty ("key", key);
         connect (reply, &QNetworkReply::finished,         this, &BibleWorker::onTextRequestFinished);
         connect (reply, &QNetworkReply::downloadProgress, this, &BibleWorker::onTextRequestProgress);
@@ -516,12 +517,11 @@ void BibleWorker::onTextRequestProgress (qint64 bytesReceived, qint64 bytesTotal
 
         BibleText * text = getBibleTextFromKey (key);
         if (text) {
-            text->update_percent (qreal (bytesReceived) / qreal (bytesTotal) * 100);
+            text->update_percent (qRound (qreal (bytesReceived) / qreal (bytesTotal) * 100.0));
             emit textItemUpdated (key, text->toQtVariant ());
         }
         //qDebug () << "onTextRequestProgress:" << "text=" << text;
 
-        //qDebug () << "onTextRequestProgress:" << "bytesReceived=" << bytesReceived << "bytesTotal=" << bytesTotal;
     }
 }
 

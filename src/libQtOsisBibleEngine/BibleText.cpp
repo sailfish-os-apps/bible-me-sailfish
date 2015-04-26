@@ -6,7 +6,7 @@
 BibleText::BibleText (QObject * parent) : QObject (parent) {
     m_hasLocal      = false;
     m_isLoading     = false;
-    m_percent       = 0.0;
+    m_percent       = 0;
     m_textKey       = QByteArrayLiteral ("");
     m_languageID    = QByteArrayLiteral ("");
     m_languageTitle = QStringLiteral ("");

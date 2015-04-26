@@ -45,10 +45,6 @@ int main (int argc, char * argv []) {
     QTranslator translator;
     translator.load (file.exists () ? translationFilename : ":/lang/en.qm");
     app->installTranslator (&translator);
-    if (!qgetenv ("HTTP_PROXY").isEmpty ()) {
-        QString proxyStr = QString::fromLocal8Bit (qgetenv ("HTTP_PROXY")).toLower ().remove ("http://");
-        QNetworkProxy::setApplicationProxy (QNetworkProxy (QNetworkProxy::HttpProxy, proxyStr.split (':').first (), proxyStr.split (':').last ().toInt ()));
-    }
     QQuickView * view = SailfishApp::createView ();
     view->setSource (QUrl ("qrc:/qml/harbour-bibleme.qml"));
     view->show ();
