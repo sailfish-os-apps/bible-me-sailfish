@@ -1,9 +1,9 @@
 Name: harbour-bibleme
 Summary: Bible'me
-Version: 0.3.0
+Version: 2.0.0
 Release: 1
 Group: Qt/Qt
-URL: http://example.org/
+URL: http://gitlab.unique-conception.org/apps-4-sailfish/bible-me
 License: LICENSE
 Sources:
 - '%{name}-%{version}.tar.bz2'
