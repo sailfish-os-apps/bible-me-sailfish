@@ -20,9 +20,6 @@ SOURCES     += src/harbour-bibleme.cpp
 HEADERS     +=
 
 OTHER_FILES += \
-    $$PWD/harbour-bibleme.desktop \
-    $$PWD/harbour-bibleme.png \
-    $$PWD/harbour-bibleme.svg \
     $$PWD/rpm/harbour-bibleme.yaml \
     $$PWD/qml/harbour-bibleme.qml \
     $$PWD/qml/pages/BookmarksPage.qml \
@@ -32,24 +29,15 @@ OTHER_FILES += \
     $$PWD/qml/pages/ViewPage.qml \
     $$PWD/qml/pages/SettingsPage.qml \
     $$PWD/qml/cover/CoverPage.qml \
-    $$PWD/lang/*.ts \
-    $$PWD/lang/de.ts
+    $$PWD/harbour-bibleme.desktop \
+    $$PWD/icons/harbour-bibleme.svg \
+    $$PWD/icons/86x86/harbour-bibleme.png \
+    $$PWD/icons/108x108/harbour-bibleme.png \
+    $$PWD/icons/128x128/harbour-bibleme.png \
+    $$PWD/icons/256x256/harbour-bibleme.png
 
 RESOURCES   += \
     $$PWD/data.qrc
-
-################## PACKAGING ########################
-
-CONFIG       += link_pkgconfig
-PKGCONFIG    += sailfishapp
-
-target.files  = $${TARGET}
-target.path   = /usr/bin
-desktop.files = $${TARGET}.desktop
-desktop.path  = /usr/share/applications
-icon.files    = $${TARGET}.png
-icon.path     = /usr/share/icons/hicolor/86x86/apps
-INSTALLS     += target desktop icon
 
 ################ LOCALIZATION ########################
 
@@ -71,3 +59,21 @@ SOURCES += \
     qml/cover/CoverPage.qml
 }
 
+################## PACKAGING ########################
+
+CONFIG       += link_pkgconfig
+PKGCONFIG    += sailfishapp
+
+target.files  = $${TARGET}
+target.path   = /usr/bin
+desktop.files = $${TARGET}.desktop
+desktop.path  = /usr/share/applications
+icon86.files  = $$PWD/icons/86x86/$${TARGET}.png
+icon86.path   = /usr/share/icons/hicolor/86x86/apps
+icon108.files = $$PWD/icons/108x108/$${TARGET}.png
+icon108.path  = /usr/share/icons/hicolor/108x108/apps
+icon128.files = $$PWD/icons/128x128/$${TARGET}.png
+icon128.path  = /usr/share/icons/hicolor/128x128/apps
+icon256.files = $$PWD/icons/256x256/$${TARGET}.png
+icon256.path  = /usr/share/icons/hicolor/256x256/apps
+INSTALLS     += target desktop icon86 icon108 icon128 icon256
