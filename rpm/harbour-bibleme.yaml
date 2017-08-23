@@ -1,27 +1,38 @@
 Name: harbour-bibleme
 Summary: Bible'me
-Version: 2.0.0
+Version: 3.0.0
 Release: 1
+
 Group: Qt/Qt
+
 URL: http://gitlab.unique-conception.org/apps-4-sailfish/bible-me
 License: LICENSE
+
 Sources:
 - '%{name}-%{version}.tar.bz2'
+
 Description: |
   A simple app to read the Bible on your phone.
   Supports local caching using OSIS format,
   and can search in full text mode.
+
 Configure: none
+
 Builder: qtc5
+
 PkgConfigBR:
-- Qt5Quick
-- Qt5Qml
 - Qt5Core
-- sailfishapp >= 0.0.10
+- Qt5Qml
+- Qt5Quick
+- sailfishapp >= 1.0.2
+
 Requires:
 - sailfishsilica-qt5 >= 0.10.9
+
 Files:
 - '%{_bindir}'
+- '%{_datadir}/%{name}'
 - '%{_datadir}/applications/%{name}.desktop'
-- '%{_datadir}/icons/hicolor/86x86/apps/%{name}.png'
+- '%{_datadir}/icons/hicolor/*/apps/%{name}.png'
+
 PkgBR: []

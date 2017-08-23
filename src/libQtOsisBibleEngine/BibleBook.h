@@ -2,16 +2,18 @@
 #define BIBLEBOOK_H
 
 #include <QObject>
-#include <QQmlHelpers>
 #include <QVariant>
 #include <QString>
 #include <QByteArray>
 
+#include "QQmlVarPropertyHelpers.h"
+#include "QQmlConstRefPropertyHelpers.h"
+
 class BibleBook : public QObject {
     Q_OBJECT
-    QML_READONLY_PROPERTY (QByteArray, bookId)
-    QML_READONLY_PROPERTY (int,        firstChapterIdx)
-    QML_READONLY_PROPERTY (int,        lastChapterIdx)
+    QML_READONLY_CSTREF_PROPERTY (QByteArray, bookId)
+    QML_READONLY_VAR_PROPERTY (int,        firstChapterIdx)
+    QML_READONLY_VAR_PROPERTY (int,        lastChapterIdx)
 
 public:
     explicit BibleBook (QObject * parent = NULL);

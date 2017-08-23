@@ -13,8 +13,8 @@
 #include <qqml.h>
 #include <sailfishapp.h>
 
-#include <QQmlObjectListModel>
-#include <QQmlVariantListModel>
+#include "QQmlObjectListModel.h"
+#include "QQmlVariantListModel.h"
 
 #include "BibleEngine.h"
 #include "BibleWorker.h"
@@ -27,16 +27,16 @@
 
 int main (int argc, char * argv []) {
     QSettings::setDefaultFormat (QSettings::IniFormat);
-    qmlRegisterUncreatableType<QAbstractItemModel>    (QML_MODULE, "AbstractItemModel",  "!!!");
-    qmlRegisterUncreatableType<QAbstractListModel>    (QML_MODULE, "AbstractListModel",  "!!!");
-    qmlRegisterUncreatableType<QQmlObjectListModel>   (QML_MODULE, "ObjectListModel",    "!!!");
-    qmlRegisterUncreatableType<QQmlVariantListModel>  (QML_MODULE, "VariantListModel",   "!!!");
-    qmlRegisterType<QSortFilterProxyModel>            (QML_MODULE, "SortFilterProxyModel");
-    qmlRegisterType<BibleEngine>                      (QML_MODULE, "BibleEngine");
-    qmlRegisterType<BibleText>                        (QML_MODULE, "BibleText");
-    qmlRegisterType<BibleBook>                        (QML_MODULE, "BibleBook");
-    qmlRegisterType<BibleChapter>                     (QML_MODULE, "BibleChapter");
-    qmlRegisterType<BibleVerse>                       (QML_MODULE, "BibleVerse");
+    qmlRegisterUncreatableType<QAbstractItemModel>      (QML_MODULE, "AbstractItemModel",  "!!!");
+    qmlRegisterUncreatableType<QAbstractListModel>      (QML_MODULE, "AbstractListModel",  "!!!");
+    qmlRegisterUncreatableType<QQmlObjectListModelBase> (QML_MODULE, "ObjectListModel",    "!!!");
+    qmlRegisterUncreatableType<QQmlVariantListModel>    (QML_MODULE, "VariantListModel",   "!!!");
+    qmlRegisterType<QSortFilterProxyModel>              (QML_MODULE, "SortFilterProxyModel");
+    qmlRegisterType<BibleEngine>                        (QML_MODULE, "BibleEngine");
+    qmlRegisterType<BibleText>                          (QML_MODULE, "BibleText");
+    qmlRegisterType<BibleBook>                          (QML_MODULE, "BibleBook");
+    qmlRegisterType<BibleChapter>                       (QML_MODULE, "BibleChapter");
+    qmlRegisterType<BibleVerse>                         (QML_MODULE, "BibleVerse");
     QGuiApplication * app = SailfishApp::application (argc, argv);
     app->setApplicationName ("harbour-bibleme");
     QLocale locale;

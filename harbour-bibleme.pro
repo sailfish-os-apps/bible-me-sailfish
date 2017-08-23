@@ -10,57 +10,33 @@ MOC_DIR      = _moc
 OBJECTS_DIR  = _obj
 RCC_DIR      = _rcc
 
-INCLUDEPATH += \
-    $$PWD/src/libQtOsisBibleEngine \
-    $$PWD/src/libQtQmlTricks \
-    /usr/include/sailfishapp
+INCLUDEPATH += /usr/include/sailfishapp
 
 ############### SOURCES & CONTENT #####################
 
-SOURCES     += \
-    src/harbour-bibleme.cpp \
-    src/libQtQmlTricks/qqmlvariantlistmodel.cpp \
-    src/libQtQmlTricks/qqmlobjectlistmodel.cpp \
-    src/libQtQmlTricks/qqmlhelpers.cpp \
-    src/libQtOsisBibleEngine/BibleEngine.cpp \
-    src/libQtOsisBibleEngine/BibleText.cpp \
-    src/libQtOsisBibleEngine/BibleBook.cpp \
-    src/libQtOsisBibleEngine/BibleChapter.cpp \
-    src/libQtOsisBibleEngine/BibleVerse.cpp \
-    src/libQtOsisBibleEngine/BibleWorker.cpp
+include ($$PWD/src/libQtOsisBibleEngine/QtOsisBibleEngine.pri)
 
-HEADERS     += \
-    src/libQtQmlTricks/qqmlvariantlistmodel_p.h \
-    src/libQtQmlTricks/qqmlvariantlistmodel.h \
-    src/libQtQmlTricks/qqmlobjectlistmodel_p.h \
-    src/libQtQmlTricks/qqmlobjectlistmodel.h \
-    src/libQtQmlTricks/qqmlmodels.h \
-    src/libQtQmlTricks/qqmlhelpers.h \
-    src/libQtOsisBibleEngine/BibleEngine.h \
-    src/libQtOsisBibleEngine/BibleText.h \
-    src/libQtOsisBibleEngine/BibleBook.h \
-    src/libQtOsisBibleEngine/BibleChapter.h \
-    src/libQtOsisBibleEngine/BibleVerse.h \
-    src/libQtOsisBibleEngine/BibleWorker.h
+SOURCES     += src/harbour-bibleme.cpp
+HEADERS     +=
 
 OTHER_FILES += \
-    harbour-bibleme.desktop \
-    harbour-bibleme.png \
-    harbour-bibleme.svg \
-    rpm/harbour-bibleme.yaml \
-    qml/harbour-bibleme.qml \
-    qml/pages/BookmarksPage.qml \
-    qml/pages/SearchPage.qml \
-    qml/pages/SelectPage.qml \
-    qml/pages/FilesPage.qml \
-    qml/pages/ViewPage.qml \
-    qml/pages/SettingsPage.qml \
-    qml/cover/CoverPage.qml \
-    lang/*.ts \
-    lang/de.ts
+    $$PWD/harbour-bibleme.desktop \
+    $$PWD/harbour-bibleme.png \
+    $$PWD/harbour-bibleme.svg \
+    $$PWD/rpm/harbour-bibleme.yaml \
+    $$PWD/qml/harbour-bibleme.qml \
+    $$PWD/qml/pages/BookmarksPage.qml \
+    $$PWD/qml/pages/SearchPage.qml \
+    $$PWD/qml/pages/SelectPage.qml \
+    $$PWD/qml/pages/FilesPage.qml \
+    $$PWD/qml/pages/ViewPage.qml \
+    $$PWD/qml/pages/SettingsPage.qml \
+    $$PWD/qml/cover/CoverPage.qml \
+    $$PWD/lang/*.ts \
+    $$PWD/lang/de.ts
 
 RESOURCES   += \
-    data.qrc
+    $$PWD/data.qrc
 
 ################## PACKAGING ########################
 

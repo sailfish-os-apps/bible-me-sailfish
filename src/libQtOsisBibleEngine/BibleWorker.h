@@ -2,14 +2,16 @@
 #define BIBLEWORKER_H
 
 #include <QObject>
-#include <QQmlHelpers>
 #include <QNetworkAccessManager>
 #include <QDir>
 #include <QRegularExpression>
 #include <QSettings>
 #include <QStandardPaths>
 
-#define REPOS_BASEURL QString ("https://raw.githubusercontent.com/lookitscook/osis-bibles/master")
+#include "QQmlVarPropertyHelpers.h"
+#include "QQmlConstRefPropertyHelpers.h"
+
+#define REPOS_BASEURL QString ("http://gitlab.unique-conception.org/3rd-party/osis-bibles/raw/master")
 #define DATADIR_PATH  QStandardPaths::writableLocation (QStandardPaths::DataLocation)
 
 class BibleText;

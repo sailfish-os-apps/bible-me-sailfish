@@ -1,0 +1,6 @@
+[submodule "src/libQtQmlTricks/SmartDataModels"]
+	path = src/libQtQmlTricks/SmartDataModels
+	url = ../../qt-qml-tricks/qt-qml-models.git
+[submodule "src/libQtQmlTricks/SuperMacros"]
+	path = src/libQtQmlTricks/SuperMacros
+	url = ../../qt-qml-tricks/qt-supermacros.git

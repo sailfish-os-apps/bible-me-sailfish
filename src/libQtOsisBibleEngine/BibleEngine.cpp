@@ -1,18 +1,12 @@
 
 #include "BibleEngine.h"
-#include "BibleWorker.h"
-#include "BibleText.h"
-#include "BibleBook.h"
-#include "BibleChapter.h"
-#include "BibleVerse.h"
 
-#include <QQmlObjectListModel>
 #include <QDir>
 #include <QDateTime>
 #include <QStringList>
 //#include <QDebug>
 
-#define USE_OLD_QT_CONNECT
+#undef USE_OLD_QT_CONNECT
 
 /*************************** ENGINE *******************************/
 
@@ -57,23 +51,12 @@ BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
 
     m_confMan            = new QNetworkConfigurationManager          (this);
 
-    m_modelTexts         = QQmlObjectListModel::create<BibleText>    (this);
-    m_modelTexts->setRoleNameForUid (QByteArrayLiteral ("textKey"));
-
-    m_modelBooks         = QQmlObjectListModel::create<BibleBook>    (this);
-    m_modelBooks->setRoleNameForUid (QByteArrayLiteral ("bookId"));
-
-    m_modelChapters      = QQmlObjectListModel::create<BibleChapter> (this);
-    m_modelChapters->setRoleNameForUid (QByteArrayLiteral ("chapterId"));
-
-    m_modelVerses        = QQmlObjectListModel::create<BibleVerse>   (this);
-    m_modelVerses->setRoleNameForUid (QByteArrayLiteral ("verseId"));
-
-    m_modelBookmarks     = QQmlObjectListModel::create<BibleVerse>   (this);
-    m_modelBookmarks->setRoleNameForUid (QByteArrayLiteral ("verseId"));
-
-    m_modelSearchResults = QQmlObjectListModel::create<BibleVerse>   (this);
-    m_modelSearchResults->setRoleNameForUid (QByteArrayLiteral ("verseId"));
+    m_modelTexts         = new QQmlObjectListModel<BibleText>    (this, "", "textKey");
+    m_modelBooks         = new QQmlObjectListModel<BibleBook>    (this, "", "bookId");
+    m_modelChapters      = new QQmlObjectListModel<BibleChapter> (this, "", "chapterId");
+    m_modelVerses        = new QQmlObjectListModel<BibleVerse>   (this, "", "verseId");
+    m_modelBookmarks     = new QQmlObjectListModel<BibleVerse>   (this, "", "verseId");
+    m_modelSearchResults = new QQmlObjectListModel<BibleVerse>   (this, "", "verseId");
 
     m_thread = new QThread (this);
 

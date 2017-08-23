@@ -2,7 +2,6 @@
 #define BIBLEENGINE_H
 
 #include <QObject>
-#include <QQmlHelpers>
 #include <QHash>
 #include <QString>
 #include <QVariant>
@@ -11,36 +10,40 @@
 #include <QThread>
 #include <QSettings>
 
-class QQmlObjectListModel;
+#include "QQmlVarPropertyHelpers.h"
+#include "QQmlPtrPropertyHelpers.h"
+#include "QQmlConstRefPropertyHelpers.h"
 
-class BibleWorker;
-class BibleText;
-class BibleBook;
-class BibleChapter;
-class BibleVerse;
+#include "QQmlObjectListModel.h"
+
+#include "BibleWorker.h"
+#include "BibleText.h"
+#include "BibleBook.h"
+#include "BibleChapter.h"
+#include "BibleVerse.h"
 
 class BibleEngine : public QObject {
     Q_OBJECT
 
     Q_PROPERTY (bool hasConnection READ getConnection NOTIFY hasConnectionChanged)
 
-    QML_READONLY_PROPERTY (int,  searchPercent)
-    QML_READONLY_PROPERTY (bool, isFetching)
-    QML_READONLY_PROPERTY (bool, isReloading)
-    QML_READONLY_PROPERTY (bool, isSearching)
-    QML_READONLY_PROPERTY (bool, isLoading)
-    QML_READONLY_PROPERTY (QString, currentPositionId)
-    QML_READONLY_PROPERTY (QString, currentTextKey)
+    QML_READONLY_VAR_PROPERTY (int,  searchPercent)
+    QML_READONLY_VAR_PROPERTY (bool, isFetching)
+    QML_READONLY_VAR_PROPERTY (bool, isReloading)
+    QML_READONLY_VAR_PROPERTY (bool, isSearching)
+    QML_READONLY_VAR_PROPERTY (bool, isLoading)
+    QML_READONLY_CSTREF_PROPERTY (QString, currentPositionId)
+    QML_READONLY_CSTREF_PROPERTY (QString, currentTextKey)
 
-    QML_WRITABLE_PROPERTY (bool, showLocalOnly)
-    QML_WRITABLE_PROPERTY (qreal, textFontSize)
+    QML_WRITABLE_VAR_PROPERTY (bool, showLocalOnly)
+    QML_WRITABLE_VAR_PROPERTY (qreal, textFontSize)
 
-    QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelTexts)
-    QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelBooks)
-    QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelChapters)
-    QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelVerses)
-    QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelBookmarks)
-    QML_CONSTANT_PROPERTY (QQmlObjectListModel  *, modelSearchResults)
+    QML_OBJMODEL_PROPERTY (BibleText, modelTexts)
+    QML_OBJMODEL_PROPERTY (BibleBook, modelBooks)
+    QML_OBJMODEL_PROPERTY (BibleChapter, modelChapters)
+    QML_OBJMODEL_PROPERTY (BibleVerse, modelVerses)
+    QML_OBJMODEL_PROPERTY (BibleVerse, modelBookmarks)
+    QML_OBJMODEL_PROPERTY (BibleVerse, modelSearchResults)
 
 public:
     explicit BibleEngine  (QObject * parent = NULL);
