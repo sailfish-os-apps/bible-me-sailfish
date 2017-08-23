@@ -16,19 +16,11 @@ INCLUDEPATH += /usr/include/sailfishapp
 
 include ($$PWD/src/libQtOsisBibleEngine/QtOsisBibleEngine.pri)
 
-SOURCES     += src/harbour-bibleme.cpp
-HEADERS     +=
+SOURCES += $$PWD/src/harbour-bibleme.cpp
+HEADERS +=
 
 OTHER_FILES += \
     $$PWD/rpm/harbour-bibleme.yaml \
-    $$PWD/qml/harbour-bibleme.qml \
-    $$PWD/qml/pages/BookmarksPage.qml \
-    $$PWD/qml/pages/SearchPage.qml \
-    $$PWD/qml/pages/SelectPage.qml \
-    $$PWD/qml/pages/FilesPage.qml \
-    $$PWD/qml/pages/ViewPage.qml \
-    $$PWD/qml/pages/SettingsPage.qml \
-    $$PWD/qml/cover/CoverPage.qml \
     $$PWD/harbour-bibleme.desktop \
     $$PWD/icons/harbour-bibleme.svg \
     $$PWD/icons/86x86/harbour-bibleme.png \
@@ -36,8 +28,7 @@ OTHER_FILES += \
     $$PWD/icons/128x128/harbour-bibleme.png \
     $$PWD/icons/256x256/harbour-bibleme.png
 
-RESOURCES   += \
-    $$PWD/data.qrc
+RESOURCES += $$PWD/data.qrc
 
 ################ LOCALIZATION ########################
 
@@ -47,17 +38,9 @@ TRANSLATIONS += \
     lang/fi.ts \
     lang/de.ts
 
-qt_linguist_only {
-SOURCES += \
-    qml/harbour-bibleme.qml \
-    qml/pages/BookmarksPage.qml \
-    qml/pages/SearchPage.qml \
-    qml/pages/SelectPage.qml \
-    qml/pages/FilesPage.qml \
-    qml/pages/ViewPage.qml \
-    qml/pages/SettingsPage.qml \
-    qml/cover/CoverPage.qml
-}
+#lupdate_only { ### uncomment this block before running lupdate on project !
+#    SOURCES += qml/*.qml qml/pages/*.qml qml/cover/*.qml
+#}
 
 ################## PACKAGING ########################
 
@@ -66,7 +49,7 @@ PKGCONFIG    += sailfishapp
 
 target.files  = $${TARGET}
 target.path   = /usr/bin
-desktop.files = $${TARGET}.desktop
+desktop.files = $$PWD/$${TARGET}.desktop
 desktop.path  = /usr/share/applications
 icon86.files  = $$PWD/icons/86x86/$${TARGET}.png
 icon86.path   = /usr/share/icons/hicolor/86x86/apps
