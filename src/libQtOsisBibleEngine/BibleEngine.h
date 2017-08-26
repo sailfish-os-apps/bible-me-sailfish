@@ -1,113 +1,107 @@
-﻿#ifndef BIBLEENGINE_H
+#ifndef BIBLEENGINE_H
 #define BIBLEENGINE_H
 
 #include <QObject>
-#include <QHash>
-#include <QString>
-#include <QVariant>
-#include <QtGlobal>
-#include <QNetworkConfigurationManager>
-#include <QThread>
 #include <QSettings>
+#include <QTranslator>
 
 #include "QQmlVarPropertyHelpers.h"
-#include "QQmlPtrPropertyHelpers.h"
 #include "QQmlConstRefPropertyHelpers.h"
-
+#include "QQmlPtrPropertyHelpers.h"
 #include "QQmlObjectListModel.h"
 
-#include "BibleWorker.h"
-#include "BibleText.h"
-#include "BibleBook.h"
-#include "BibleChapter.h"
-#include "BibleVerse.h"
+class BibleWorker;
+class BibleLanguage;
+class BibleText;
+class BibleBook;
+class BibleChapter;
+class BibleVerse;
 
 class BibleEngine : public QObject {
     Q_OBJECT
-
-    Q_PROPERTY (bool hasConnection READ getConnection NOTIFY hasConnectionChanged)
-
-    QML_READONLY_VAR_PROPERTY (int,  searchPercent)
-    QML_READONLY_VAR_PROPERTY (bool, isFetching)
-    QML_READONLY_VAR_PROPERTY (bool, isReloading)
-    QML_READONLY_VAR_PROPERTY (bool, isSearching)
-    QML_READONLY_VAR_PROPERTY (bool, isLoading)
-    QML_READONLY_CSTREF_PROPERTY (QString, currentPositionId)
-    QML_READONLY_CSTREF_PROPERTY (QString, currentTextKey)
-
-    QML_WRITABLE_VAR_PROPERTY (bool, showLocalOnly)
-    QML_WRITABLE_VAR_PROPERTY (qreal, textFontSize)
-
-    QML_OBJMODEL_PROPERTY (BibleText, modelTexts)
-    QML_OBJMODEL_PROPERTY (BibleBook, modelBooks)
-    QML_OBJMODEL_PROPERTY (BibleChapter, modelChapters)
-    QML_OBJMODEL_PROPERTY (BibleVerse, modelVerses)
-    QML_OBJMODEL_PROPERTY (BibleVerse, modelBookmarks)
-    QML_OBJMODEL_PROPERTY (BibleVerse, modelSearchResults)
+    QML_READONLY_VAR_PROPERTY    (bool,          isRefreshing)
+    QML_READONLY_VAR_PROPERTY    (bool,          isLoading)
+    QML_READONLY_VAR_PROPERTY    (bool,          isSearching)
+    QML_WRITABLE_VAR_PROPERTY    (bool,          showLocalOnly)
+    QML_WRITABLE_VAR_PROPERTY    (int,           textFontSize)
+    QML_READONLY_VAR_PROPERTY    (int,           refreshPercent)
+    QML_READONLY_VAR_PROPERTY    (int,           searchPercent)
+    QML_READONLY_CSTREF_PROPERTY (QString,       currentTextKey)
+    QML_READONLY_CSTREF_PROPERTY (QString,       currentBookId)
+    QML_READONLY_CSTREF_PROPERTY (QString,       currentChapterId)
+    QML_READONLY_CSTREF_PROPERTY (QString,       currentVerseId)
+    QML_READONLY_CSTREF_PROPERTY (QString,       currentTranslationCode)
+    QML_OBJMODEL_PROPERTY        (BibleLanguage, languagesModel)
+    QML_OBJMODEL_PROPERTY        (BibleBook,     booksModel)
+    QML_OBJMODEL_PROPERTY        (BibleChapter,  chaptersModel)
+    QML_OBJMODEL_PROPERTY        (BibleVerse,    versesModel)
+    QML_OBJMODEL_PROPERTY        (BibleVerse,    resultsModel)
+    QML_OBJMODEL_PROPERTY        (BibleVerse,    favoritesModel)
 
 public:
-    explicit BibleEngine  (QObject * parent = NULL);
-    virtual  ~BibleEngine  ();
+    explicit BibleEngine (QObject * parent = Q_NULLPTR);
+    virtual ~BibleEngine (void);
 
-    Q_INVOKABLE void requestIndex    ();
-    Q_INVOKABLE void requestText     (QString langId, QString bibleId);
-    Q_INVOKABLE void loadText        (QString key);
-    Q_INVOKABLE void loadBook        (QString bookId, bool force = false);
-    Q_INVOKABLE void loadChapter     (QString chapterId, bool force = false);
-    Q_INVOKABLE void removeText      (QString key);
-    Q_INVOKABLE void reloadIndex     ();
-    Q_INVOKABLE void searchInText    (QString str);
-    Q_INVOKABLE void setCurrentVerse (QString verseId, bool force = false);
-    Q_INVOKABLE void addBookmark     (QString verseId);
-    Q_INVOKABLE void removeBookmark  (QString verseId);
-
-    bool getConnection () const;
+public slots:
+    void refreshIndex   (void);
+    void downloadText   (const QString & languageId, const QString & bibleId);
+    void loadText       (const QString & textKey);
+    void removeText     (const QString & textKey);
+    void loadBook       (const QString & bookId);
+    void loadChapter    (const QString & chapterId);
+    void changePosition (const QString & verseId);
+    void addBookmark    (const QString & verseId);
+    void removeBookmark (const QString & verseId);
+    void searchContent  (const QString & filter);
+    void translateUi    (const QString & code);
 
 signals:
-    void hasConnectionChanged     (bool arg);
-    void searchRequested          (QString token);
-    void downloadTextRequested    (QString langId, QString bibleId);
-    void refreshIndexRequested    ();
-    void loadIndexRequested       ();
-    void loadTextRequested        (QString textKey);
-    void removeTextRequested      (QString textKey);
-    void loadBookRequested        (QString bookId,    bool force = false);
-    void loadChapterRequested     (QString chapterId, bool force = false);
-    void setCurrentVerseRequested (QString verseId,   bool force = false);
-    void addBookmarkRequested     (QString verseId);
-    void removeBookmarkRequested  (QString verseId);
+    void refreshIndexRequested   (void);
+    void downloadTextRequested   (const QString & langId, const QString & bibleId);
+    void loadIndexRequested      (void);
+    void loadTextRequested       (const QString & textKey);
+    void removeTextRequested     (const QString & textKey);
+    void loadBookRequested       (const QString & bookId);
+    void loadChapterRequested    (const QString & chapterId);
+    void addBookmarkRequested    (const QString & verseId);
+    void removeBookmarkRequested (const QString & verseId);
+    void searchContentRequested  (const QString & filter);
 
 protected slots:
-    void saveTextFontSize       (qreal textFontSize);
-    void saveShowLocalOnly      (bool showLocalOnly);
+    void onRefreshStarted   (void);
+    void onRefreshProgress  (const int percent);
+    void onRefreshFinished  (const bool ok);
 
-private slots:
-    void onTextsModelLoaded     (QVariantList items);
-    void onBooksModelLoaded     (QVariantList items);
-    void onChaptersModelLoaded  (QVariantList items);
-    void onVersesModelLoaded    (QVariantList items);
+    void onLoadStarted      (void);
+    void onLoadFinished     (void);
 
-    void onSearchStarted          ();
-    void onSearchResultItem       (QVariantMap verse);
-    void onSearchFinished         ();
+    void onTextsLoaded      (const QList<QVariantMap> & texts);
+    void onBooksLoaded      (const QList<QVariantMap> & books);
+    void onChaptersLoaded   (const QList<QVariantMap> & chapters);
+    void onVersesLoaded     (const QList<QVariantMap> & verses);
+    void onBookmarksLoaded  (const QList<QVariantMap> & bookmarks);
 
-    void onBookmarksLoaded        (QVariantList items);
-    void onBookmarkAdded          (QVariantMap  item);
-    void onBookmarkRemoved        (QString      verseId);
+    void onDownloadStarted  (const QString & textKey);
+    void onDownloadProgress (const QString & textKey, const int percent);
+    void onDownloadFinished (const QString & textKey, const bool ok);
+    void onTextRemoved      (const QString & textKey);
 
-    void onLoadTextStarted        ();
-    void onLoadTextFinished       ();
+    void onBookmarkAdded    (const QVariantMap & verse);
+    void onBookmarkRemoved  (const QString     & verseId);
 
-    void onRefreshStarted         ();
-    void onRefreshFinished        ();
+    void onSearchStarted    (void);
+    void onSearchProgress   (const int percent);
+    void onSearchFound      (const QVariantMap & verse);
+    void onSearchFinished   (void);
 
-    void onTextItemUpdated     (QString textKey, QVariantMap item);
+protected:
+    void doUpdateLanguagesFlags (void);
 
 private:
-    QThread                       * m_thread;
-    BibleWorker                   * m_worker;
-    QSettings                     * m_settings;
-    QNetworkConfigurationManager  * m_confMan;
+    BibleWorker * m_worker;
+    QThread     * m_thread;
+    QSettings   * m_settings;
+    QTranslator * m_translator;
 };
 
 #endif // BIBLEENGINE_H

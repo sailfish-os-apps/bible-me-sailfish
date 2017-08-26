@@ -6,7 +6,6 @@ Page {
     id: page;
     allowedOrientations: Orientation.All;
 
-
     Item {
         id: header;
         height: Theme.itemSizeMedium;
@@ -22,7 +21,7 @@ Page {
             anchors.fill: parent;
         }
         PageHeader {
-            title: qsTr ("Bookmarks");
+            title: $ (qsTr ("Bookmarks"));
         }
     }
     SilicaListView {
@@ -30,7 +29,7 @@ Page {
         clip: true;
         anchors.fill: parent;
         anchors.topMargin: header.height;
-        model: bibleEngine.modelBookmarks;
+        model: bibleEngine.favoritesModel;
         delegate:Component {
             ListItem {
                 id: itemVerse;
@@ -38,7 +37,7 @@ Page {
                 menu: Component {
                     ContextMenu {
                         MenuItem {
-                            text: qsTr ("Remove from bookmarks");
+                            text: $ (qsTr ("Remove from bookmarks"));
                             onClicked: { remove (); }
                         }
                     }
@@ -49,21 +48,31 @@ Page {
                 }
                 onClicked: {
                     pageStack.navigateBack ();
-                    bibleEngine.setCurrentVerse (model.verseId);
+                    bibleEngine.changePosition (bibleVerse.verseId);
                 }
+
+                readonly property BibleVerse bibleVerse : model ['qtObject'];
+
+                property bool dimmed : false;
 
                 function remove () {
-                    var tmp = model.verseId;
-                    remorse.execute (itemVerse,
-                                     qsTr ("Removing"),
-                                     function () {
-                                         bibleEngine.removeBookmark (tmp);
-                                     });
+                    itemVerse.dimmed = true;
+                    remorse.execute (placeholder, $ (qsTr ("Removing %1")).arg (formatReference (bibleVerse.verseId)));
                 }
 
-                RemorseItem { id: remorse; }
+                RemorseItem {
+                    id: remorse;
+                    onTriggered: {
+                        bibleEngine.removeBookmark (itemVerse.bibleVerse.verseId);
+                        itemVerse.dimmed = false;
+                    }
+                    onCanceled: {
+                        itemVerse.dimmed = false;
+                    }
+                }
                 Column {
                     id: layoutText;
+                    opacity: (itemVerse.dimmed ? 0.0 : 1.0);
                     anchors {
                         top: parent.top;
                         left: parent.left;
@@ -102,11 +111,15 @@ Page {
                         }
                     }
                 }
+                Item {
+                    id: placeholder;
+                    anchors.fill: parent;
+                }
             }
         }
 
         ViewPlaceholder {
-            text: qsTr ("No bookmark.");
+            text: $ (qsTr ("No bookmark."));
             enabled: (!view.count);
         }
         VerticalScrollDecorator { }

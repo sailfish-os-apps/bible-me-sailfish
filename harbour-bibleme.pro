@@ -4,6 +4,8 @@
 TARGET       = harbour-bibleme
 TEMPLATE     = app
 
+CONFIG      += c++11
+
 QT          += core network gui qml quick
 
 MOC_DIR      = _moc
@@ -38,9 +40,9 @@ TRANSLATIONS += \
     lang/fi.ts \
     lang/de.ts
 
-#lupdate_only { ### uncomment this block before running lupdate on project !
-#    SOURCES += qml/*.qml qml/pages/*.qml qml/cover/*.qml
-#}
+lupdate_only { ### uncomment this block before running lupdate on project !
+    SOURCES += qml/*.qml qml/pages/*.qml qml/cover/*.qml
+}
 
 ################## PACKAGING ########################
 

@@ -6,7 +6,6 @@ Page {
     id: page;
     allowedOrientations: Orientation.All;
 
-
     Item {
         id: header;
         height: Theme.itemSizeMedium;
@@ -23,7 +22,7 @@ Page {
         }
         SearchField {
             id: inputSearch;
-            label: qsTr ("Search...");
+            label: $ (qsTr ("Search..."));
             placeholderText: label;
             anchors {
                 left: parent.left;
@@ -33,10 +32,10 @@ Page {
             }
             Keys.onReturnPressed: {
                 if (text !== "") {
-                    bibleEngine.searchInText (text);
+                    bibleEngine.searchContent (text);
                 }
                 else {
-                    bibleEngine.modelSearchResults.clear ();
+                    bibleEngine.resultsModel.clear ();
                 }
                 focus = false;
             }
@@ -49,80 +48,76 @@ Page {
         opacity: (enabled ? 1.0 : 0.35);
         anchors.fill: parent;
         anchors.topMargin: header.height;
-        model: (bibleEngine.modelSearchResults);
-        delegate:Component {
-            ListItem {
-                id: itemVerse;
-                contentHeight: (layoutText.height + layoutText.anchors.margins * 2);
+        model: bibleEngine.resultsModel;
+        delegate: ListItem {
+            id: itemVerse;
+            contentHeight: (layoutText.height + layoutText.anchors.margins * 2);
+            anchors {
+                left: parent.left;
+                right: parent.right;
+            }
+            onClicked: {
+                pageStack.navigateBack ();
+                bibleEngine.changePosition (model.verseId);
+            }
+
+            Column {
+                id: layoutText;
                 anchors {
+                    top: parent.top;
                     left: parent.left;
                     right: parent.right;
-                }
-                onClicked: {
-                    pageStack.navigateBack ();
-                    bibleEngine.setCurrentVerse (model.verseId);
+                    margins: Theme.paddingMedium;
                 }
 
-                Column {
-                    id: layoutText;
+                Label {
+                    text: formatReference (model.verseId);
+                    color: Theme.primaryColor;
+                    textFormat: Text.PlainText;
+                    horizontalAlignment: Text.AlignLeft;
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
+                    font {
+                        family: Theme.fontFamilyHeading;
+                        pixelSize: Theme.fontSizeMedium;
+                    }
                     anchors {
-                        top: parent.top;
                         left: parent.left;
                         right: parent.right;
-                        margins: Theme.paddingMedium;
-                    }
-
-                    Label {
-                        text: formatReference (model.verseId);
-                        color: Theme.primaryColor;
-                        textFormat: Text.PlainText;
-                        horizontalAlignment: Text.AlignLeft;
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                        font {
-                            family: Theme.fontFamilyHeading;
-                            pixelSize: Theme.fontSizeMedium;
-                        }
-                        anchors {
-                            left: parent.left;
-                            right: parent.right;
-                        }
-                    }
-                    Label {
-                        text: model.textContent;
-                        color: Theme.secondaryColor;
-                        textFormat: Text.PlainText;
-                        horizontalAlignment: Text.AlignJustify;
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                        font {
-                            family: Theme.fontFamilyHeading;
-                            pixelSize: Theme.fontSizeTiny;
-                        }
-                        anchors {
-                            left: parent.left;
-                            right: parent.right;
-                        }
                     }
                 }
-
-
+                Label {
+                    text: model.textContent;
+                    color: Theme.secondaryColor;
+                    textFormat: Text.PlainText;
+                    horizontalAlignment: Text.AlignJustify;
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
+                    font {
+                        family: Theme.fontFamilyHeading;
+                        pixelSize: Theme.fontSizeTiny;
+                    }
+                    anchors {
+                        left: parent.left;
+                        right: parent.right;
+                    }
+                }
             }
         }
 
         ViewPlaceholder {
-            text: (inputSearch.text !== "" ? qsTr ("No matching results !") : "");
+            text: (inputSearch.text !== "" ? $ (qsTr ("No matching results !")) : "");
             enabled: (!view.count);
         }
         VerticalScrollDecorator { }
     }
     BusyIndicator {
         id: busy;
-        running: (bibleEngine.isSearching);
+        running: bibleEngine.isSearching;
         visible: running;
         size: BusyIndicatorSize.Large;
         anchors.centerIn: parent;
     }
     Label {
-        text: qsTr ("%1%").arg (bibleEngine.searchPercent);
+        text: "%1%".arg (bibleEngine.searchPercent);
         textFormat: Text.PlainText;
         visible: busy.visible;
         color: Theme.secondaryHighlightColor;

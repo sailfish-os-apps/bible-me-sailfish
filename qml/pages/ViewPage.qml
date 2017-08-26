@@ -7,8 +7,7 @@ Page {
     allowedOrientations: Orientation.All;
 
     function repositionView () {
-        //console.debug ("repositionView", bibleEngine.currentPositionId);
-        var tmp = String (bibleEngine.currentPositionId).split ('.');
+        var tmp = bibleEngine.currentVerseId.split ('.');
         if (tmp.length === 3) {
             var idx = (parseInt (tmp.pop ()) -1);
             if (idx < view.count) {
@@ -22,9 +21,9 @@ Page {
 
     Connections {
         target: bibleEngine;
-        onCurrentTextKeyChanged   : { repositionView (); }
-        onCurrentPositionIdChanged: { repositionView (); }
-        Component.onCompleted:      { repositionView (); }
+        onCurrentVerseIdChanged: { repositionView (); }
+        onCurrentTextKeyChanged: { repositionView (); }
+        Component.onCompleted:   { repositionView (); }
     }
     SilicaListView {
         id: view;
@@ -32,7 +31,7 @@ Page {
         enabled: !busy.visible;
         opacity: (enabled ? 1.0 : 0.35);
         anchors.fill: parent;
-        model: bibleEngine.modelVerses;
+        model: bibleEngine.versesModel;
         header: BackgroundItem {
             height: Theme.itemSizeMedium;
             anchors {
@@ -47,7 +46,7 @@ Page {
                 anchors.fill: parent;
             }
             PageHeader {
-                title: formatReference (bibleEngine.currentPositionId);
+                title: formatReference (bibleEngine.currentVerseId);
             }
         }
         delegate: Component {
@@ -57,15 +56,15 @@ Page {
                 menu: Component {
                     ContextMenu {
                         MenuItem {
-                            text: qsTr ("Copy text");
+                            text: $ (qsTr ("Copy text"));
                             onClicked: { Clipboard.text = model.textContent; }
                         }
                         MenuItem {
-                            text: qsTr ("Copy reference");
-                            onClicked: { Clipboard.text = model.verseId; }
+                            text: $ (qsTr ("Copy reference"));
+                            onClicked: { Clipboard.text = formatReference (model.verseId); }
                         }
                         MenuItem {
-                            text: (model.marked ? qsTr ("Remove from bookmarks") : qsTr ("Add to bookmarks"));
+                            text: $ (model.marked ? qsTr ("Remove from bookmarks") : qsTr ("Add to bookmarks"));
                             onClicked: {
                                 if (model.marked) {
                                     bibleEngine.removeBookmark (model.verseId);
@@ -78,12 +77,12 @@ Page {
                     }
                 }
                 anchors {
-                    left: parent.left;
-                    right: parent.right;
+                    left: (parent ? parent.left : undefined);
+                    right: (parent ? parent.right : undefined);
                 }
-                onClicked: { bibleEngine.setCurrentVerse (model.verseId); }
+                onClicked: { bibleEngine.changePosition (model.verseId); }
 
-                property bool isCurrent : (bibleEngine.currentPositionId === String (model.verseId));
+                readonly property bool isCurrent : (bibleEngine.currentVerseId === model.verseId);
 
                 Label {
                     id: lblVerse;
@@ -91,8 +90,9 @@ Page {
                     textFormat: Text.StyledText;
                     horizontalAlignment: Text.AlignJustify;
                     wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                    color: (isCurrent ? Theme.highlightColor : (model.marked ? Theme.secondaryHighlightColor : Theme.primaryColor));
+                    color: (isCurrent ? Theme.highlightColor : Theme.primaryColor);
                     font {
+                        bold: model.marked;
                         family: Theme.fontFamilyHeading;
                         pixelSize: bibleEngine.textFontSize;
                     }
@@ -108,7 +108,7 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr ("Settings");
+                text: $ (qsTr ("Settings"));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (settingsPage);
@@ -116,7 +116,7 @@ Page {
                 }
             }
             MenuItem {
-                text: qsTr ("Bible version");
+                text: $ (qsTr ("Bible version"));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (filesPage);
@@ -124,7 +124,7 @@ Page {
                 }
             }
             MenuItem {
-                text: qsTr ("My bookmarks");
+                text: $ (qsTr ("My bookmarks"));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (bookmarksPage);
@@ -132,7 +132,7 @@ Page {
                 }
             }
             MenuItem {
-                text: qsTr ("Search");
+                text: $ (qsTr ("Search"));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
                     pageStack.pushAttached (searchPage);
@@ -142,22 +142,22 @@ Page {
         }
         PushUpMenu {
             MenuItem {
-                text: qsTr ("Go to next chapter");
+                text: $ (qsTr ("Go to next chapter"));
                 font.family: Theme.fontFamilyHeading;
-                enabled: (currentBookName !== "" && currentChapterIdx > 0 && currentChapterIdx < bibleEngine.modelChapters.count);
+                enabled: (currentBookName !== "" && currentChapterIdx > 0 && currentChapterIdx < bibleEngine.chaptersModel.count);
                 onClicked: {
                     view.positionViewAtBeginning ();
-                    bibleEngine.setCurrentVerse ("%1.%2.1".arg (currentBookName).arg (currentChapterIdx +1));
+                    bibleEngine.changePosition ("%1.%2.1".arg (currentBookName).arg (currentChapterIdx +1));
                 }
 
-                property string currentBookName   : (bibleEngine.currentPositionId.split ('.') [0] || "");
-                property int    currentChapterIdx : (parseInt (bibleEngine.currentPositionId.split ('.') [1] || "0"));
+                readonly property string currentBookName   : (bibleEngine.currentVerseId.split ('.') [0] || "");
+                readonly property int    currentChapterIdx : (parseInt (bibleEngine.currentVerseId.split ('.') [1] || "0"));
             }
         }
         ViewPlaceholder {
-            text: (bibleEngine.currentTextKey === ""
-                   ? qsTr ("No text available. Use the menu to choose one")
-                   : qsTr ("No verse select. Click on header to select"));
+            text: $ (bibleEngine.currentTextKey === ""
+                     ? qsTr ("No text available. Use the menu to choose one")
+                     : qsTr ("No verse select. Click on header to select"));
             enabled: (!view.count);
         }
         VerticalScrollDecorator { }

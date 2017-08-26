@@ -2,25 +2,21 @@
 #define BIBLEVERSE_H
 
 #include <QObject>
-#include <QVariant>
-#include <QString>
-#include <QByteArray>
 
 #include "QQmlVarPropertyHelpers.h"
 #include "QQmlConstRefPropertyHelpers.h"
 
 class BibleVerse : public QObject {
     Q_OBJECT
-    QML_READONLY_VAR_PROPERTY (bool,       marked)
-    QML_READONLY_CSTREF_PROPERTY (QByteArray, verseId)
-    QML_READONLY_CSTREF_PROPERTY (QString,    textContent)
+    QML_CONSTANT_CSTREF_PROPERTY (QString, verseId)
+    QML_CONSTANT_CSTREF_PROPERTY (QString, textContent)
+    QML_READONLY_VAR_PROPERTY    (bool,    marked)
 
 public:
-    explicit BibleVerse (QObject * parent = NULL);
-
-    static BibleVerse * fromQtVariant (QVariantMap variant, QObject * parent = NULL);
-    QVariantMap toQtVariant () const;
-    void updateWithQtVariant(QVariantMap variant);
+    explicit BibleVerse (const QString & verseId     = "",
+                         const QString & textContent = "",
+                         const bool      marked      = false,
+                         QObject       * parent      = Q_NULLPTR);
 };
 
 #endif // BIBLEVERSE_H

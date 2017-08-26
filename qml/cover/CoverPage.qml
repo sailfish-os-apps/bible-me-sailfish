@@ -36,7 +36,7 @@ CoverBackground {
         }
 
         Repeater {
-            model: formatReference (bibleEngine.currentPositionId).split (",");
+            model: formatReference (bibleEngine.currentVerseId).split (",");
             delegate: Label {
                 text: model.modelData.trim ();
                 textFormat: Text.PlainText;

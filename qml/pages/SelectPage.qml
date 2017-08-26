@@ -21,7 +21,7 @@ Page {
             anchors.fill: parent;
         }
         PageHeader {
-            title: qsTr ("Select a verse");
+            title: $ (qsTr ("Select a verse"));
         }
     }
     Row {
@@ -38,7 +38,7 @@ Page {
                 top: parent.top;
                 bottom: parent.bottom;
             }
-            model: bibleEngine.modelBooks;
+            model: bibleEngine.booksModel;
             delegate:Component {
                 ListItem {
                     contentHeight: Theme.itemSizeSmall;
@@ -50,7 +50,7 @@ Page {
 
                     Label {
                         text: formatReference (model.bookId, true);
-                        color: (bibleEngine.currentPositionId.indexOf (String (model.bookId) + ".") === 0
+                        color: (bibleEngine.currentBookId === model.bookId
                                 ? Theme.highlightColor
                                 : Theme.primaryColor);
                         horizontalAlignment: Text.AlignHCenter;
@@ -85,7 +85,7 @@ Page {
                 top: parent.top;
                 bottom: parent.bottom;
             }
-            model: bibleEngine.modelChapters;
+            model: bibleEngine.chaptersModel;
             delegate:Component {
                 ListItem {
                     contentHeight: Theme.itemSizeSmall;
@@ -97,7 +97,7 @@ Page {
 
                     Label {
                         text: formatReference (model.chapterId, true);
-                        color: (bibleEngine.currentPositionId.indexOf (String (model.chapterId) + ".") === 0
+                        color: (bibleEngine.currentChapterId === model.chapterId
                                 ? Theme.highlightColor
                                 : Theme.primaryColor);
                         horizontalAlignment: Text.AlignHCenter;
@@ -132,7 +132,7 @@ Page {
                 top: parent.top;
                 bottom: parent.bottom;
             }
-            model: bibleEngine.modelVerses;
+            model: bibleEngine.versesModel;
             delegate:Component {
                 ListItem {
                     contentHeight: Theme.itemSizeSmall;
@@ -141,13 +141,13 @@ Page {
                         right: parent.right;
                     }
                     onClicked: {
-                        bibleEngine.setCurrentVerse (model.verseId);
+                        bibleEngine.changePosition (model.verseId);
                         pageStack.navigateBack ();
                     }
 
                     Label {
                         text: formatReference (model.verseId, true);
-                        color: (bibleEngine.currentPositionId === String (model.verseId)
+                        color: (bibleEngine.currentVerseId === model.verseId
                                 ? Theme.highlightColor
                                 : Theme.primaryColor);
                         horizontalAlignment: Text.AlignHCenter;

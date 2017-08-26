@@ -21,18 +21,46 @@ Page {
             anchors.fill: parent;
         }
         PageHeader {
-            title: qsTr ("Settings");
+            title: $ (qsTr ("Settings"));
         }
+    }
+    ComboBox {
+        id: combo;
+        label: $ (qsTr ("Language"));
+        currentIndex: {
+            var ret = 0;
+            for (var idx = 0; idx < codes.length; ++idx) {
+                if (codes [idx] === bibleEngine.currentTranslationCode) {
+                    ret = idx;
+                    break;
+                }
+            }
+            return ret;
+        }
+        menu: ContextMenu {
+            MenuItem { text: "English";  }
+            MenuItem { text: "Deutsch";  }
+            MenuItem { text: "Français"; }
+            MenuItem { text: "Suomi";    }
+        }
+        anchors {
+            top: header.bottom;
+            left: parent.left;
+            right: parent.right;
+        }
+        onCurrentIndexChanged: { bibleEngine.translateUi (codes [currentIndex]); }
+
+        readonly property var codes : ["en", "de", "fr", "fi"];
     }
     Slider {
         id: slider;
-        label: qsTr ("Text font-size");
+        label: $ (qsTr ("Text font-size"));
         minimumValue: Theme.fontSizeTiny;
         maximumValue: Theme.fontSizeExtraLarge;
         stepSize: 1.0;
         valueText: (value.toFixed ());
         anchors {
-            top: header.bottom;
+            top: combo.bottom;
             left: parent.left;
             right: parent.right;
             margins: Theme.paddingLarge;
@@ -45,7 +73,7 @@ Page {
         }
     }
     Label {
-        text: qsTr ("Sample text");
+        text: $ (qsTr ("Sample text"));
         color: Theme.primaryColor;
         textFormat: Text.PlainText;
         font.pixelSize: slider.value;

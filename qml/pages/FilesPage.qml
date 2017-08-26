@@ -6,175 +6,235 @@ Page {
     id: page;
     allowedOrientations: Orientation.All;
 
-    SilicaListView {
+    SilicaFlickable {
         id: view;
         enabled: !busy.visible;
         opacity: (enabled ? 1.0 : 0.35);
+        contentHeight: layout.height;
         anchors.fill: parent;
-        header: Item {
-            id: header;
-            height: Theme.itemSizeMedium;
+
+        Column {
+            id: layout;
             anchors {
+                top: parent.top;
                 left: parent.left;
                 right: parent.right;
             }
 
-            Rectangle {
-                color: "white";
-                opacity: 0.15;
-                anchors.fill: parent;
-            }
-            PageHeader {
-                title: qsTr ("The Holy Bible versions");
-            }
-        }
-        model: SortFilterProxyModel {
-            dynamicSortFilter: true;
-            filterKeyColumn: 0;
-            filterRole: bibleEngine.modelTexts.roleForName ("hasLocal");
-            filterRegExp: (bibleEngine.showLocalOnly ? /true/ : /[true|false]/);
-            sourceModel: bibleEngine.modelTexts;
-        }
-        section {
-            property: "languageTitle";
-            criteria: ViewSection.FullString;
-            delegate: Label {
-                text: section.split ("; ").join (" | ");
-                font.pixelSize: Theme.fontSizeExtraSmall;
-                font.family: Theme.fontFamilyHeading;
-                color: Theme.secondaryHighlightColor;
-                height: contentHeight;
-                horizontalAlignment: Text.AlignRight;
-                anchors {
-                    left: parent.left;
-                    right: parent.right;
-                    margins: Theme.paddingLarge;
-                }
-            }
-        }
-        delegate: Component {
-            ListItem {
-                id: itemText;
-                enabled: !itemText.bibleText.isLoading;
-                contentHeight: Theme.itemSizeSmall;
-                menu: (itemText.bibleText.hasLocal ? menuLocal : menuRemote);
+            Item {
+                id: header;
+                height: Theme.itemSizeMedium;
                 anchors {
                     left: parent.left;
                     right: parent.right;
                 }
-                onClicked: {
-                    if (itemText.bibleText.hasLocal) {
-                        pageStack.navigateBack ();
-                        bibleEngine.loadText ("%1__%2".arg (model.languageID).arg (model.bibleID));
+
+                Rectangle {
+                    color: "white";
+                    opacity: 0.15;
+                    anchors.fill: parent;
+                }
+                PageHeader {
+                    title: $ (qsTr ("The Holy Bible versions"));
+                }
+            }
+            Repeater {
+                id: repeater;
+                model: bibleEngine.languagesModel;
+                delegate: Column {
+                    id: itemLanguage;
+                    visible: (!bibleEngine.showLocalOnly || itemLanguage.bibleLanguage.hasLocal);
+                    anchors {
+                        left: parent.left;
+                        right: parent.right;
                     }
-                }
-                ListView.onAdd: AddAnimation { target: itemText; }
 
-                property BibleText bibleText : model ['qtObject'];
-                property string    key       : "%1__%2".arg (bibleText.languageID).arg (bibleText.bibleID);
+                    readonly property BibleLanguage bibleLanguage : model ['qtObject'];
 
-                function remove () {
-                    var tmp = key;
-                    remorse.execute (itemText,
-                                     qsTr ("Deleting"),
-                                     function () {
-                                         bibleEngine.removeText (tmp);
-                                     });
-                }
+                    property bool expanded : false;
 
-                RemorseItem { id: remorse; }
-                Component {
-                    id: menuRemote;
+                    ListItem {
+                        contentHeight: Theme.itemSizeSmall;
+                        onClicked: { itemLanguage.expanded = !itemLanguage.expanded; }
 
-                    ContextMenu {
-                        MenuItem {
-                            text: qsTr ("Download this version");
+                        Image {
+                            id: ico;
+                            source: "image://theme/icon-m-right?%1".arg (Theme.highlightColor);
+                            rotation: (itemLanguage.expanded ? 90 : 0);
+                            anchors {
+                                left: parent.left;
+                                margins: Theme.paddingMedium;
+                                verticalCenter: parent.verticalCenter;
+                            }
+
+                            Behavior on rotation {
+                                NumberAnimation {
+                                    duration: 350;
+                                }
+                            }
+                        }
+                        Label {
+                            text: itemLanguage.bibleLanguage.languageTitle.split ("; ").join (" | ");
+                            color: Theme.highlightColor;
+                            elide: Text.ElideRight;
+                            font.family: Theme.fontFamilyHeading;
+                            font.pixelSize: Theme.fontSizeLarge;
+                            anchors {
+                                left: ico.right;
+                                right: parent.right;
+                                margins: Theme.paddingLarge;
+                                verticalCenter: parent.verticalCenter;
+                            }
+                        }
+                        GlassItem {
+                            color: Theme.highlightColor;
+                            visible: itemLanguage.bibleLanguage.hasLocal;
+                            anchors {
+                                verticalCenter: parent.verticalCenter;
+                                horizontalCenter: parent.right;
+                            }
+                        }
+                    }
+                    Repeater {
+                        id: subrepeater;
+                        model: (itemLanguage.expanded ? itemLanguage.bibleLanguage.textsModel : 0);
+                        delegate: ListItem {
+                            id: itemText;
+                            visible: (!bibleEngine.showLocalOnly || itemText.bibleText.hasLocal);
+                            enabled: !bibleText.isLoading;
+                            contentHeight: Theme.itemSizeSmall;
+                            menu: ContextMenu {
+                                MenuItem {
+                                    text: (itemText.bibleText.hasLocal
+                                           ? $ (qsTr ("Remove this version"))
+                                           : $ (qsTr ("Download this version")));
+                                    onClicked: {
+                                        if (itemText.bibleText.hasLocal) {
+                                            itemText.remove ();
+                                        }
+                                        else {
+                                            bibleEngine.downloadText (itemLanguage.bibleLanguage.languageId,
+                                                                      itemText.bibleText.bibleId);
+                                        }
+                                    }
+                                }
+                            }
+                            anchors {
+                                left: parent.left;
+                                right: parent.right;
+                            }
                             onClicked: {
-                                bibleEngine.requestText (itemText.bibleText.languageID,
-                                                         itemText.bibleText.bibleID);
+                                if (bibleText.hasLocal) {
+                                    pageStack.navigateBack ();
+                                    bibleEngine.loadText (itemText.bibleText.textKey);
+                                }
+                            }
+                            //ListView.onAdd: AddAnimation { target: itemText; }
+
+                            readonly property BibleText bibleText : model ['qtObject'];
+
+                            property bool dimmed : false;
+
+                            function remove () {
+                                itemText.dimmed = true;
+                                remorse.execute (placeholder, $ (qsTr ("Deleting '%1'").arg (itemText.bibleText.bibleTitle)));
+                            }
+
+                            RemorseItem {
+                                id: remorse;
+                                onTriggered: {
+                                    bibleEngine.removeText (itemText.bibleText.textKey);
+                                    itemText.dimmed = false;
+                                }
+                                onCanceled: {
+                                    itemText.dimmed = false;
+                                }
+                            }
+                            GlassItem {
+                                color: Theme.highlightColor;
+                                visible: itemText.bibleText.hasLocal;
+                                opacity: (itemText.dimmed ? 0.35 : 1.0);
+                                anchors {
+                                    verticalCenter: parent.verticalCenter;
+                                    horizontalCenter: parent.right;
+                                }
+                            }
+                            Label {
+                                id: lblTitle;
+                                text: itemText.bibleText.bibleTitle;
+                                color: (itemText.key === bibleEngine.currentTextKey
+                                        ? Theme.highlightColor
+                                        : (itemText.bibleText.hasLocal
+                                           ? Theme.primaryColor
+                                           : Theme.secondaryColor));
+                                horizontalAlignment: Text.AlignLeft;
+                                font.pixelSize: Theme.fontSizeMedium;
+                                font.family: Theme.fontFamilyHeading;
+                                elide: Text.ElideRight;
+                                opacity: (itemText.dimmed ? 0.0 : 1.0);
+                                anchors {
+                                    left: parent.left;
+                                    right: (lblStatus.visible ? lblStatus.left : parent.right);
+                                    margins: Theme.paddingLarge;
+                                    verticalCenter: parent.verticalCenter;
+                                }
+                            }
+                            Label {
+                                id: lblStatus;
+                                text: (itemText.bibleText.isLoading
+                                       ? "(%1%)".arg (itemText.bibleText.percent)
+                                       : "");
+                                visible: (text !== "");
+                                opacity: (itemText.dimmed ? 0.0 : 1.0);
+                                color: Theme.secondaryColor;
+                                font.pixelSize: Theme.fontSizeSmall;
+                                font.family: Theme.fontFamilyHeading;
+                                anchors {
+                                    right: parent.right;
+                                    margins: Theme.paddingLarge;
+                                    verticalCenter: parent.verticalCenter;
+                                }
+                            }
+                            Item {
+                                id: placeholder;
+                                anchors.fill: parent;
                             }
                         }
                     }
                 }
-                Component {
-                    id: menuLocal;
-
-                    ContextMenu {
-                        MenuItem {
-                            text: qsTr ("Remove this version");
-                            onClicked: { remove (); }
-                        }
-                    }
-                }
-                GlassItem {
-                    color: Theme.highlightColor;
-                    visible: itemText.bibleText.hasLocal;
-                    anchors {
-                        verticalCenter: parent.verticalCenter;
-                        horizontalCenter: parent.right;
-                    }
-                }
-                Label {
-                    id: lblTitle;
-                    text: itemText.bibleText.bibleTitle;
-                    color: (itemText.key === bibleEngine.currentTextKey
-                            ? Theme.highlightColor
-                            : (itemText.bibleText.hasLocal
-                               ? Theme.primaryColor
-                               : Theme.secondaryColor));
-                    horizontalAlignment: Text.AlignLeft;
-                    font.pixelSize: Theme.fontSizeMedium;
-                    font.family: Theme.fontFamilyHeading;
-                    elide: Text.ElideRight;
-                    anchors {
-                        left: parent.left;
-                        right: (lblStatus.visible ? lblStatus.left : parent.right);
-                        margins: Theme.paddingLarge;
-                        verticalCenter: parent.verticalCenter;
-                    }
-                }
-                Label {
-                    id: lblStatus;
-                    text: (itemText.bibleText.isLoading
-                           ? qsTr ("(%1%)").arg (itemText.bibleText.percent)
-                           : "");
-                    visible: (text !== "");
-                    color: Theme.secondaryColor;
-                    font.pixelSize: Theme.fontSizeSmall;
-                    font.family: Theme.fontFamilyHeading;
-                    anchors {
-                        right: parent.right;
-                        margins: Theme.paddingLarge;
-                        verticalCenter: parent.verticalCenter;
-                    }
-                }
             }
         }
-
         PullDownMenu {
             MenuItem {
-                text: qsTr ("Refresh list from Web...");
+                text: $ (qsTr ("Refresh list from Web..."));
                 font.family: Theme.fontFamilyHeading;
-                enabled: bibleEngine.hasConnection;
-                onClicked: { bibleEngine.requestIndex (); bibleEngine.showLocalOnly = false; }
+                onClicked: { bibleEngine.showLocalOnly = false; bibleEngine.refreshIndex ();}
             }
             MenuItem {
-                text: qsTr ("Show only local : <b>%1</b>").arg (bibleEngine.showLocalOnly ? qsTr ("ON") : qsTr ("OFF"));
+                text: $ (qsTr ("Show only local : <b>%1</b>").arg (bibleEngine.showLocalOnly ? qsTr ("ON") : qsTr ("OFF")));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: { bibleEngine.showLocalOnly = !bibleEngine.showLocalOnly; }
             }
         }
         ViewPlaceholder {
-            text: qsTr ("No Bible available. Try refresh !");
-            enabled: (!view.count);
+            text: $ (qsTr ("No Bible available. Try refresh !"));
+            enabled: (!repeater.count);
         }
         VerticalScrollDecorator { }
     }
     BusyIndicator {
         id: busy;
-        running: (bibleEngine.isFetching || bibleEngine.isReloading);
+        running: bibleEngine.isRefreshing;
         visible: running;
         size: BusyIndicatorSize.Large;
+        anchors.centerIn: parent;
+    }
+    Label {
+        text: "%1%".arg (bibleEngine.refreshPercent);
+        textFormat: Text.PlainText;
+        visible: busy.visible;
+        color: Theme.secondaryHighlightColor;
+        font.pixelSize: Theme.fontSizeLarge;
         anchors.centerIn: parent;
     }
 }

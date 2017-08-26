@@ -1,339 +1,385 @@
 
 #include "BibleEngine.h"
 
-#include <QDir>
-#include <QDateTime>
-#include <QStringList>
-//#include <QDebug>
+#include "BibleWorker.h"
+#include "BibleLanguage.h"
+#include "BibleText.h"
+#include "BibleBook.h"
+#include "BibleChapter.h"
+#include "BibleVerse.h"
 
-#undef USE_OLD_QT_CONNECT
+#include <QFile>
+#include <QDebug>
+#include <QThread>
+#include <QTranslator>
+#include <QCoreApplication>
 
-/*************************** ENGINE *******************************/
-
-BibleEngine::BibleEngine (QObject * parent) : QObject (parent) {
-    m_isSearching       = false;
-    m_isReloading       = false;
-    m_isFetching        = false;
-    m_isLoading         = false;
-    m_searchPercent     = 0.0;
-    m_currentPositionId = QStringLiteral ("");
-    m_currentTextKey    = QStringLiteral ("");
-
-    m_settings = new QSettings (this);
-    m_settings->setValue (QStringLiteral ("lastStart"), QDateTime::currentMSecsSinceEpoch ());
-
-    if (!m_settings->contains (QStringLiteral ("bookmarks"))) {
-        m_settings->setValue (QStringLiteral ("bookmarks"), QStringList ());
-    }
-
-    if (!m_settings->contains (QStringLiteral ("textFontSize"))) {
-        m_settings->setValue (QStringLiteral ("textFontSize"), 32);
-    }
-    m_textFontSize = m_settings->value (QStringLiteral ("textFontSize")).toReal ();
-
-    if (!m_settings->contains (QStringLiteral ("currentTextKey"))) {
-        m_settings->setValue (QStringLiteral ("currentTextKey"), QStringLiteral (""));
-    }
-    m_currentTextKey = m_settings->value (QStringLiteral ("currentTextKey")).toString ();
-
-    if (!m_settings->contains (QStringLiteral ("showLocalOnly"))) {
-        m_settings->setValue (QStringLiteral ("showLocalOnly"), false);
-    }
-    m_showLocalOnly = m_settings->value (QStringLiteral ("showLocalOnly")).toBool ();
-
-    if (!m_settings->contains (QStringLiteral ("currPosId"))) {
-        m_settings->setValue (QStringLiteral ("currPosId"), QStringLiteral ("John.3.16"));
-    }
-    m_currentPositionId = m_settings->value (QStringLiteral ("currPosId")).toString ();
-
-    QDir dataDir (QDir::homePath ());
-    dataDir.mkpath (DATADIR_PATH);
-
-    m_confMan            = new QNetworkConfigurationManager          (this);
-
-    m_modelTexts         = new QQmlObjectListModel<BibleText>    (this, "", "textKey");
-    m_modelBooks         = new QQmlObjectListModel<BibleBook>    (this, "", "bookId");
-    m_modelChapters      = new QQmlObjectListModel<BibleChapter> (this, "", "chapterId");
-    m_modelVerses        = new QQmlObjectListModel<BibleVerse>   (this, "", "verseId");
-    m_modelBookmarks     = new QQmlObjectListModel<BibleVerse>   (this, "", "verseId");
-    m_modelSearchResults = new QQmlObjectListModel<BibleVerse>   (this, "", "verseId");
-
-    m_thread = new QThread (this);
-
-    m_worker = new BibleWorker;
+BibleEngine::BibleEngine (QObject * parent)
+    : QObject          { parent    }
+    , m_isRefreshing   { false     }
+    , m_isLoading      { false     }
+    , m_isSearching    { false     }
+    , m_showLocalOnly  { false     }
+    , m_textFontSize   { 32        }
+    , m_refreshPercent { 0         }
+    , m_searchPercent  { 0         }
+    , m_translator     { Q_NULLPTR }
+{
+    qRegisterMetaType<QList<QVariantMap>> ();
+    m_languagesModel = new QQmlObjectListModel<BibleLanguage> (this, "", "languageId");
+    m_booksModel     = new QQmlObjectListModel<BibleBook>     (this, "", "bookId");
+    m_chaptersModel  = new QQmlObjectListModel<BibleChapter>  (this, "", "chapterId");
+    m_versesModel    = new QQmlObjectListModel<BibleVerse>    (this, "", "verseId");
+    m_resultsModel   = new QQmlObjectListModel<BibleVerse>    (this, "", "verseId");
+    m_favoritesModel = new QQmlObjectListModel<BibleVerse>    (this, "", "verseId");
+    m_translator     = new QTranslator (this);
+    m_settings       = new QSettings   (this);
+    m_thread         = new QThread     (this);
+    m_worker         = new BibleWorker;
     m_worker->moveToThread (m_thread);
-
-#ifndef USE_OLD_QT_CONNECT
-
-    connect (m_confMan, &QNetworkConfigurationManager::onlineStateChanged, this,     &BibleEngine::hasConnectionChanged);
-    connect (this,      &BibleEngine::showLocalOnlyChanged,                this,     &BibleEngine::saveShowLocalOnly);
-    connect (this,      &BibleEngine::textFontSizeChanged,                 this,     &BibleEngine::saveTextFontSize);
-    connect (m_thread,  &QThread::started,                                 m_worker, &BibleWorker::doInit);
-
-    connect (this,      &BibleEngine::searchRequested,                     m_worker, &BibleWorker::doSearchVerse);
-    connect (this,      &BibleEngine::refreshIndexRequested,               m_worker, &BibleWorker::doRefreshIndex);
-    connect (this,      &BibleEngine::loadIndexRequested,                  m_worker, &BibleWorker::doLoadIndex);
-    connect (this,      &BibleEngine::downloadTextRequested,               m_worker, &BibleWorker::doDownloadText);
-    connect (this,      &BibleEngine::loadTextRequested,                   m_worker, &BibleWorker::doLoadText);
-    connect (this,      &BibleEngine::removeTextRequested,                 m_worker, &BibleWorker::doRemoveText);
-    connect (this,      &BibleEngine::loadBookRequested,                   m_worker, &BibleWorker::doLoadBook);
-    connect (this,      &BibleEngine::loadChapterRequested,                m_worker, &BibleWorker::doLoadChapter);
-    connect (this,      &BibleEngine::setCurrentVerseRequested,            m_worker, &BibleWorker::doNavigateToRefId);
-    connect (this,      &BibleEngine::addBookmarkRequested,                m_worker, &BibleWorker::doAddBookmark);
-    connect (this,      &BibleEngine::removeBookmark,                      m_worker, &BibleWorker::doRemoveBookmark);
-
-    connect (m_worker,  &BibleWorker::textsModelLoaded,                    this,     &BibleEngine::onTextsModelLoaded);
-    connect (m_worker,  &BibleWorker::booksModelLoaded,                    this,     &BibleEngine::onBooksModelLoaded);
-    connect (m_worker,  &BibleWorker::chaptersModelLoaded,                 this,     &BibleEngine::onChaptersModelLoaded);
-    connect (m_worker,  &BibleWorker::versesModelLoaded,                   this,     &BibleEngine::onVersesModelLoaded);
-    connect (m_worker,  &BibleWorker::currentPositionChanged,              this,     &BibleEngine::update_currentPositionId);
-    connect (m_worker,  &BibleWorker::searchStarted,                       this,     &BibleEngine::onSearchStarted);
-    connect (m_worker,  &BibleWorker::searchResultItem,                    this,     &BibleEngine::onSearchResultItem);
-    connect (m_worker,  &BibleWorker::searchFinished,                      this,     &BibleEngine::onSearchFinished);
-    connect (m_worker,  &BibleWorker::searchPercentUpdated,                this,     &BibleEngine::update_searchPercent);
-    connect (m_worker,  &BibleWorker::textItemUpdated,                     this,     &BibleEngine::onTextItemUpdated);
-    connect (m_worker,  &BibleWorker::currentTextChanged,                  this,     &BibleEngine::update_currentTextKey);
-    connect (m_worker,  &BibleWorker::loadTextStarted,                     this,     &BibleEngine::onLoadTextStarted);
-    connect (m_worker,  &BibleWorker::loadTextFinished,                    this,     &BibleEngine::onLoadTextFinished);
-    connect (m_worker,  &BibleWorker::refreshStarted,                      this,     &BibleEngine::onRefreshStarted);
-    connect (m_worker,  &BibleWorker::refreshFinished,                     this,     &BibleEngine::onRefreshFinished);
-    connect (m_worker,  &BibleWorker::bookmarkAdded,                       this,     &BibleEngine::onBookmarkAdded);
-    connect (m_worker,  &BibleWorker::bookmarksLoaded,                     this,     &BibleEngine::onBookmarksLoaded);
-    connect (m_worker,  &BibleWorker::bookmarkRemoved,                     this,     &BibleEngine::onBookmarkRemoved);
-
-#else
-
-    connect (m_confMan, SIGNAL(onlineStateChanged(bool)),               this,     SIGNAL(hasConnectionChanged(bool)));
-    connect (this,      SIGNAL(showLocalOnlyChanged(bool)),             this,     SLOT(saveShowLocalOnly(bool)));
-    connect (this,      SIGNAL(textFontSizeChanged(qreal)),             this,     SLOT(saveTextFontSize(qreal)));
-    connect (m_thread,  SIGNAL(started()),                              m_worker, SLOT(doInit()));
-
-    connect (this,      SIGNAL(searchRequested(QString)),               m_worker, SLOT(doSearchVerse(QString)));
-    connect (this,      SIGNAL(refreshIndexRequested()),                m_worker, SLOT(doRefreshIndex()));
-    connect (this,      SIGNAL(loadIndexRequested()),                   m_worker, SLOT(doLoadIndex()));
-    connect (this,      SIGNAL(downloadTextRequested(QString,QString)), m_worker, SLOT(doDownloadText(QString,QString)));
-    connect (this,      SIGNAL(loadTextRequested(QString)),             m_worker, SLOT(doLoadText(QString)));
-    connect (this,      SIGNAL(removeTextRequested(QString)),           m_worker, SLOT(doRemoveText(QString)));
-    connect (this,      SIGNAL(loadBookRequested(QString,bool)),        m_worker, SLOT(doLoadBook(QString,bool)));
-    connect (this,      SIGNAL(loadChapterRequested(QString,bool)),     m_worker, SLOT(doLoadChapter(QString,bool)));
-    connect (this,      SIGNAL(setCurrentVerseRequested(QString,bool)), m_worker, SLOT(doNavigateToRefId(QString,bool)));
-    connect (this,      SIGNAL(addBookmarkRequested(QString)),          m_worker, SLOT(doAddBookmark(QString)));
-    connect (this,      SIGNAL(removeBookmarkRequested(QString)),       m_worker, SLOT(doRemoveBookmark(QString)));
-
-    connect (m_worker,  SIGNAL(textsModelLoaded(QVariantList)),         this,     SLOT(onTextsModelLoaded(QVariantList)));
-    connect (m_worker,  SIGNAL(booksModelLoaded(QVariantList)),         this,     SLOT(onBooksModelLoaded(QVariantList)));
-    connect (m_worker,  SIGNAL(chaptersModelLoaded(QVariantList)),      this,     SLOT(onChaptersModelLoaded(QVariantList)));
-    connect (m_worker,  SIGNAL(versesModelLoaded(QVariantList)),        this,     SLOT(onVersesModelLoaded(QVariantList)));
-    connect (m_worker,  SIGNAL(searchStarted()),                        this,     SLOT(onSearchStarted()));
-    connect (m_worker,  SIGNAL(searchResultItem(QVariantMap)),          this,     SLOT(onSearchResultItem(QVariantMap)));
-    connect (m_worker,  SIGNAL(searchFinished()),                       this,     SLOT(onSearchFinished()));
-    connect (m_worker,  SIGNAL(textItemUpdated(QString,QVariantMap)),   this,     SLOT(onTextItemUpdated(QString,QVariantMap)));
-    connect (m_worker,  SIGNAL(loadTextStarted()),                      this,     SLOT(onLoadTextStarted()));
-    connect (m_worker,  SIGNAL(loadTextFinished()),                     this,     SLOT(onLoadTextFinished()));
-    connect (m_worker,  SIGNAL(refreshStarted()),                       this,     SLOT(onRefreshStarted()));
-    connect (m_worker,  SIGNAL(refreshFinished()),                      this,     SLOT(onRefreshFinished()));
-    connect (m_worker,  SIGNAL(bookmarkAdded(QVariantMap)),             this,     SLOT(onBookmarkAdded(QVariantMap)));
-    connect (m_worker,  SIGNAL(bookmarksLoaded(QVariantList)),          this,     SLOT(onBookmarksLoaded(QVariantList)));
-    connect (m_worker,  SIGNAL(bookmarkRemoved(QString)),               this,     SLOT(onBookmarkRemoved(QString)));
-
-    connect (m_worker,  &BibleWorker::currentPositionChanged,              this,     &BibleEngine::update_currentPositionId);
-    connect (m_worker,  &BibleWorker::searchPercentUpdated,                this,     &BibleEngine::update_searchPercent);
-    connect (m_worker,  &BibleWorker::currentTextChanged,                  this,     &BibleEngine::update_currentTextKey);
-
-#endif
-
-    m_thread->start ();
+    /// signals from engine to worker thread
+    connect (this, &BibleEngine::refreshIndexRequested,   m_worker, &BibleWorker::refreshIndex);
+    connect (this, &BibleEngine::downloadTextRequested,   m_worker, &BibleWorker::downloadText);
+    connect (this, &BibleEngine::loadIndexRequested,      m_worker, &BibleWorker::loadIndex);
+    connect (this, &BibleEngine::loadTextRequested,       m_worker, &BibleWorker::loadText);
+    connect (this, &BibleEngine::removeTextRequested,     m_worker, &BibleWorker::removeText);
+    connect (this, &BibleEngine::loadBookRequested,       m_worker, &BibleWorker::loadBook);
+    connect (this, &BibleEngine::loadChapterRequested,    m_worker, &BibleWorker::loadChapter);
+    connect (this, &BibleEngine::addBookmarkRequested,    m_worker, &BibleWorker::addBookmark);
+    connect (this, &BibleEngine::removeBookmarkRequested, m_worker, &BibleWorker::removeBookmark);
+    connect (this, &BibleEngine::searchContentRequested,  m_worker, &BibleWorker::searchContent);
+    /// signals from worker thread to engine
+    connect (m_worker, &BibleWorker::refreshStarted,   this, &BibleEngine::onRefreshStarted);
+    connect (m_worker, &BibleWorker::refreshProgress,  this, &BibleEngine::onRefreshProgress);
+    connect (m_worker, &BibleWorker::refreshFinished,  this, &BibleEngine::onRefreshFinished);
+    connect (m_worker, &BibleWorker::loadStarted,      this, &BibleEngine::onLoadStarted);
+    connect (m_worker, &BibleWorker::loadFinished,     this, &BibleEngine::onLoadFinished);
+    connect (m_worker, &BibleWorker::textsLoaded,      this, &BibleEngine::onTextsLoaded);
+    connect (m_worker, &BibleWorker::booksLoaded,      this, &BibleEngine::onBooksLoaded);
+    connect (m_worker, &BibleWorker::chaptersLoaded,   this, &BibleEngine::onChaptersLoaded);
+    connect (m_worker, &BibleWorker::versesLoaded,     this, &BibleEngine::onVersesLoaded);
+    connect (m_worker, &BibleWorker::bookmarksLoaded,  this, &BibleEngine::onBookmarksLoaded);
+    connect (m_worker, &BibleWorker::downloadStarted,  this, &BibleEngine::onDownloadStarted);
+    connect (m_worker, &BibleWorker::downloadProgress, this, &BibleEngine::onDownloadProgress);
+    connect (m_worker, &BibleWorker::downloadFinished, this, &BibleEngine::onDownloadFinished);
+    connect (m_worker, &BibleWorker::textRemoved,      this, &BibleEngine::onTextRemoved);
+    connect (m_worker, &BibleWorker::bookmarkAdded,    this, &BibleEngine::onBookmarkAdded);
+    connect (m_worker, &BibleWorker::bookmarkRemoved,  this, &BibleEngine::onBookmarkRemoved);
+    connect (m_worker, &BibleWorker::searchStarted,    this, &BibleEngine::onSearchStarted);
+    connect (m_worker, &BibleWorker::searchProgress,   this, &BibleEngine::onSearchProgress);
+    connect (m_worker, &BibleWorker::searchFound,      this, &BibleEngine::onSearchFound);
+    connect (m_worker, &BibleWorker::searchFinished,   this, &BibleEngine::onSearchFinished);
+    /// signals from engine to settings
+    connect (this, &BibleEngine::textFontSizeChanged, [this] (void) {
+        m_settings->setValue (QStringLiteral ("textFontSize"), m_textFontSize);
+    });
+    connect (this, &BibleEngine::currentTextKeyChanged, [this] (void) {
+        m_settings->setValue (QStringLiteral ("currentTextKey"), m_currentTextKey);
+    });
+    connect (this, &BibleEngine::currentVerseIdChanged, [this] (void) {
+        m_settings->setValue (QStringLiteral ("currPosId"), m_currentVerseId);
+    });
+    connect (this, &BibleEngine::showLocalOnlyChanged, [this] (void) {
+        m_settings->setValue (QStringLiteral ("showLocalOnly"), m_showLocalOnly);
+    });
+    connect (this, &BibleEngine::currentTranslationCodeChanged, [this] (void) {
+        m_settings->setValue (QStringLiteral ("locale"), m_currentTranslationCode);
+    });
+    m_showLocalOnly          = m_settings->value (QStringLiteral ("showLocalOnly")).value<bool> ();
+    m_textFontSize           = m_settings->value (QStringLiteral ("textFontSize")).value<int> ();
+    m_currentTextKey         = m_settings->value (QStringLiteral ("currentTextKey")).value<QString> ();
+    m_currentTranslationCode = m_settings->value (QStringLiteral ("locale")).value<QString> ();
+    m_thread->start (QThread::LowPriority);
+    emit loadIndexRequested ();
+    if (!m_currentTextKey.isEmpty ()) {
+        emit loadTextRequested (m_currentTextKey);
+    }
+    if (m_currentTranslationCode.isEmpty ()) {
+        QLocale locale;
+        m_currentTranslationCode = locale.name ().split ('_').first ().toLower ();
+    }
+    translateUi (m_currentTranslationCode);
+    changePosition (m_settings->value (QStringLiteral ("currPosId")).value<QString> ());
 }
 
-BibleEngine::~BibleEngine () {
+BibleEngine::~BibleEngine (void) {
     m_thread->quit ();
     m_thread->wait ();
+    m_worker->deleteLater ();
 }
 
-bool BibleEngine::getConnection () const {
-    return m_confMan->isOnline ();
-}
-
-void BibleEngine::requestIndex () {
-    //qDebug () << "BibleEngine::requestIndex";
+void BibleEngine::refreshIndex (void) {
     emit refreshIndexRequested ();
 }
 
-void BibleEngine::requestText (QString langId, QString bibleId) {
-    //qDebug () << "BibleEngine::requestText" << langId << bibleId;
-    emit downloadTextRequested (langId, bibleId);
+void BibleEngine::downloadText (const QString & languageId, const QString & bibleId) {
+    emit downloadTextRequested (languageId, bibleId);
 }
 
-void BibleEngine::removeText (QString key) {
-    //qDebug () << "BibleEngine::removeText" << key;
-    emit removeTextRequested (key);
+void BibleEngine::loadText (const QString & textKey) {
+    update_currentTextKey (textKey);
+    m_favoritesModel->clear ();
+    m_resultsModel->clear ();
+    m_versesModel->clear ();
+    m_chaptersModel->clear ();
+    m_booksModel->clear ();
+    emit loadTextRequested (m_currentTextKey);
 }
 
-void BibleEngine::reloadIndex () {
-    //qDebug () << "BibleEngine::reloadIndex";
-    emit loadIndexRequested ();
+void BibleEngine::removeText (const QString & textKey) {
+    emit removeTextRequested (textKey);
 }
 
-void BibleEngine::searchInText (QString str) {
-    //qDebug () << "BibleEngine::searchInText" << str;
-    emit searchRequested (str);
+void BibleEngine::loadBook (const QString & bookId) {
+    m_versesModel->clear ();
+    m_chaptersModel->clear ();
+    emit loadBookRequested (bookId);
 }
 
-void BibleEngine::setCurrentVerse (QString verseId, bool force) {
-    //qDebug () << "BibleEngine::setCurrentVerse" << verseId << force;
-    emit setCurrentVerseRequested (verseId, force);
+void BibleEngine::loadChapter (const QString & chapterId) {
+    m_versesModel->clear ();
+    emit loadChapterRequested (chapterId);
 }
 
-void BibleEngine::addBookmark (QString verseId) {
-    //qDebug () << "BibleEngine::addBookmark" << verseId;
+void BibleEngine::changePosition (const QString & verseId) {
+    const QStringList newParts = verseId.split ('.');
+    const QStringList oldParts = m_currentVerseId.split ('.');
+    if (newParts.count () == 3 &&
+        oldParts.count () == 3) {
+        const QString newBook = newParts.at (0);
+        const QString oldBook = oldParts.at (0);
+        if (newBook != oldBook) {
+            update_currentBookId (newBook);
+            loadBook (m_currentBookId);
+        }
+        const QString newChapter = (newBook % '.' % newParts.at (1));
+        const QString oldChapter = (oldBook % '.' % oldParts.at (1));
+        if (newChapter != oldChapter) {
+            update_currentChapterId (newChapter);
+            loadChapter (m_currentChapterId);
+        }
+    }
+    update_currentVerseId (verseId);
+}
+
+void BibleEngine::addBookmark (const QString & verseId) {
     emit addBookmarkRequested (verseId);
 }
 
-void BibleEngine::removeBookmark (QString verseId){
-    //qDebug () << "BibleEngine::removeBookmark" << verseId;
+void BibleEngine::removeBookmark (const QString & verseId) {
     emit removeBookmarkRequested (verseId);
 }
 
-void BibleEngine::loadText (QString key) {
-    //qDebug () << "BibleEngine::loadText" << key;
-    emit loadTextRequested (key);
+void BibleEngine::searchContent (const QString & filter) {
+    m_resultsModel->clear ();
+    emit searchContentRequested (filter);
 }
 
-void BibleEngine::loadBook (QString bookId, bool force) {
-    //qDebug () << "BibleEngine::loadBook" << bookId << force;
-    emit loadBookRequested (bookId, force);
-}
-
-void BibleEngine::loadChapter (QString chapterId, bool force) {
-    //qDebug () << "BibleEngine::loadChapter" << chapterId << force;
-    emit loadChapterRequested (chapterId, force);
-}
-
-void BibleEngine::saveTextFontSize (qreal textFontSize) {
-    //qDebug () << "BibleEngine::saveTextFontSize" << textFontSize;
-    m_settings->setValue (QStringLiteral ("textFontSize"), textFontSize);
-}
-
-void BibleEngine::saveShowLocalOnly (bool showLocalOnly) {
-    //qDebug () << "BibleEngine::saveShowLocalOnly" << showLocalOnly;
-    m_settings->setValue (QStringLiteral ("showLocalOnly"), showLocalOnly);
-}
-
-void BibleEngine::onTextsModelLoaded (QVariantList items) {
-    //qDebug () << "BibleEngine::onTextsModelLoaded" << items;
-    m_modelTexts->clear ();
-    foreach (QVariant variant, items) {
-        QVariantMap item = variant.toMap ();
-        BibleText * text = BibleText::fromQtVariant (item);
-        m_modelTexts->append (text);
+void BibleEngine::translateUi (const QString & code) {
+    QCoreApplication::instance ()->removeTranslator (m_translator);
+    QString locale = code;
+    const QString qm = QStringLiteral (":/lang/%1.qm").arg (locale);
+    if (QFile::exists (qm)) {
+        m_translator->load (qm);
     }
-}
-
-void BibleEngine::onBooksModelLoaded (QVariantList items) {
-    //qDebug () << "BibleEngine::onBooksModelLoaded" << items.count ();
-    m_modelBooks->clear ();
-    foreach (QVariant variant, items) {
-        BibleBook * book = BibleBook::fromQtVariant (variant.toMap ());
-        m_modelBooks->append (book);
+    else {
+        m_translator->load (QStringLiteral (":/lang/en.qm"));
+        locale = "en";
     }
-}
-
-void BibleEngine::onChaptersModelLoaded (QVariantList items) {
-    //qDebug () << "BibleEngine::onChaptersModelLoaded" << items.count ();
-    m_modelChapters->clear ();
-    foreach (QVariant variant, items) {
-        BibleChapter * chapter = BibleChapter::fromQtVariant (variant.toMap ());
-        m_modelChapters->append (chapter);
+    if (m_translator->isEmpty ()) {
+        qWarning () << "Translation is empty for language" << code;
     }
+    QCoreApplication::instance ()->installTranslator (m_translator);
+    update_currentTranslationCode (locale);
 }
 
-void BibleEngine::onVersesModelLoaded (QVariantList items) {
-    //qDebug () << "BibleEngine::onVersesModelLoaded" << items.count ();
-    m_modelVerses->clear ();
-    foreach (QVariant variant, items) {
-        BibleVerse * verse = BibleVerse::fromQtVariant (variant.toMap ());
-        m_modelVerses->append (verse);
-    }
+void BibleEngine::onRefreshStarted (void) {
+    update_isRefreshing (true);
 }
 
-void BibleEngine::onSearchStarted () {
-    //qDebug () << "BibleEngine::onSearchStarted";
-    update_isSearching (true);
-    m_modelSearchResults->clear ();
+void BibleEngine::onRefreshProgress (const int percent) {
+    update_refreshPercent (percent);
 }
 
-void BibleEngine::onSearchResultItem (QVariantMap verse) {
-    //qDebug () << "BibleEngine::onSearchResultItem" << verse;
-    m_modelSearchResults->append (BibleVerse::fromQtVariant (verse));
+void BibleEngine::onRefreshFinished (const bool ok) {
+    Q_UNUSED (ok)
+    update_isRefreshing (false);
 }
 
-void BibleEngine::onSearchFinished () {
-    //qDebug () << "BibleEngine::onSearchFinished";
-    update_isSearching (false);
-}
-
-void BibleEngine::onBookmarksLoaded (QVariantList items) {
-    //qDebug () << "BibleEngine::onBookmarksLoaded" << items.count ();
-    m_modelBookmarks->clear ();
-    foreach (QVariant variant, items) {
-        BibleVerse * bookmark = BibleVerse::fromQtVariant (variant.toMap ());
-        m_modelBookmarks->append (bookmark);
-        BibleVerse * verse = qobject_cast<BibleVerse *> (m_modelVerses->getByUid (QString::fromLocal8Bit (bookmark->get_verseId ())));
-        if (verse) {
-            verse->update_marked (true);
-        }
-    }
-}
-
-void BibleEngine::onBookmarkAdded (QVariantMap item) {
-    //qDebug () << "BibleEngine::onBookmarkAdded" << item;
-    BibleVerse * bookmark = BibleVerse::fromQtVariant (item);
-    m_modelBookmarks->append (bookmark);
-    BibleVerse * verse = qobject_cast<BibleVerse *> (m_modelVerses->getByUid (QString::fromLocal8Bit (bookmark->get_verseId ())));
-    if (verse) {
-        verse->update_marked (true);
-    }
-}
-
-void BibleEngine::onBookmarkRemoved (QString verseId) {
-    //qDebug () << "BibleEngine::onBookmarkRemoved" << verseId;
-    for (int idx = 0; idx < m_modelBookmarks->count (); idx++) {
-        if (m_modelBookmarks->get (idx)->property ("verseId") == verseId) {
-            m_modelBookmarks->remove (idx);
-            break;
-        }
-    }
-    BibleVerse * verse = qobject_cast<BibleVerse *> (m_modelVerses->getByUid (verseId));
-    if (verse) {
-        verse->update_marked (false);
-    }
-}
-
-void BibleEngine::onLoadTextStarted () {
-    //qDebug () << "BibleEngine::onLoadTextStarted";
+void BibleEngine::onLoadStarted (void) {
     update_isLoading (true);
 }
 
-void BibleEngine::onLoadTextFinished () {
-    //qDebug () << "BibleEngine::onLoadTextFinished";
-    update_isLoading (false);
+void BibleEngine::onTextsLoaded (const QList<QVariantMap> & texts) {
+    m_languagesModel->clear ();
+    for (const QVariantMap & entry : texts) {
+        const QString languageId = entry.value ("languageId").value<QString> ();
+        BibleLanguage * languageItem = m_languagesModel->getByUid (languageId);
+        if (!languageItem) {
+            m_languagesModel->append (new BibleLanguage {
+                                          languageId,
+                                          entry.value ("languageTitle").value<QString> (),
+                                      });
+            languageItem = m_languagesModel->last ();
+        }
+        const QString bibleId = entry.value ("bibleId").value<QString> ();
+        const QString textKey = (languageId % "__" % bibleId);
+        languageItem->get_textsModel ()->append (new BibleText {
+                                                     textKey,
+                                                     bibleId,
+                                                     entry.value ("bibleTitle").value<QString> (),
+                                                     entry.value ("hasLocal").value<bool> (),
+                                                 });
+    }
+    doUpdateLanguagesFlags ();
 }
 
-void BibleEngine::onRefreshStarted () {
-    //qDebug () << "BibleEngine::onRefreshStarted";
-    update_isFetching (true);
-}
-
-void BibleEngine::onRefreshFinished () {
-    //qDebug () << "BibleEngine::onRefreshFinished";
-    update_isFetching (false);
-}
-
-void BibleEngine::onTextItemUpdated (QString textKey, QVariantMap item) {
-    //qDebug () << "BibleEngine::onTextItemUpdated";
-    BibleText * text = qobject_cast<BibleText *> (m_modelTexts->getByUid (textKey));
-    if (text) {
-        text->updateWithQtVariant (item);
+void BibleEngine::onBooksLoaded (const QList<QVariantMap> & books) {
+    m_booksModel->clear ();
+    QList<BibleBook *> tmp;
+    for (const QVariantMap & entry : books) {
+        tmp.append (new BibleBook {
+                        entry.value ("bookId").value<QString> (),
+                    });
+    }
+    m_booksModel->append (tmp);
+    if (!m_currentVerseId.isEmpty ()) {
+        const QStringList parts = m_currentVerseId.split ('.');
+        if (parts.count () == 3) {
+            loadBook    (parts.at (0));
+            loadChapter (parts.at (0) % '.' % parts.at (1));
+        }
     }
 }
 
+void BibleEngine::onChaptersLoaded (const QList<QVariantMap> & chapters) {
+    m_chaptersModel->clear ();
+    QList<BibleChapter *> tmp;
+    for (const QVariantMap & entry : chapters) {
+        tmp.append (new BibleChapter {
+                        entry.value ("chapterId").value<QString> (),
+                    });
+    }
+    m_chaptersModel->append (tmp);
+}
+
+void BibleEngine::onVersesLoaded (const QList<QVariantMap> & verses) {
+    m_versesModel->clear ();
+    QList<BibleVerse *> tmp;
+    for (const QVariantMap & entry : verses) {
+        tmp.append (new BibleVerse {
+                        entry.value ("verseId").value<QString> (),
+                        entry.value ("textContent").value<QString> (),
+                        entry.value ("marked").value<bool> (),
+                    });
+    }
+    m_versesModel->append (tmp);
+}
+
+void BibleEngine::onBookmarksLoaded (const QList<QVariantMap> & bookmarks) {
+    m_favoritesModel->clear ();
+    QList<BibleVerse *> tmp;
+    for (const QVariantMap & entry : bookmarks) {
+        tmp.append (new BibleVerse {
+                        entry.value ("verseId").value<QString> (),
+                        entry.value ("textContent").value<QString> (),
+                        entry.value ("marked").value<bool> (),
+                    });
+    }
+    m_favoritesModel->append (tmp);
+}
+
+void BibleEngine::onLoadFinished (void) {
+    update_isLoading (false);
+}
+
+void BibleEngine::onDownloadStarted (const QString & textKey) {
+    const QString languageId = textKey.split ("__").first ();
+    if (BibleLanguage * bibleLanguage = m_languagesModel->getByUid (languageId)) {
+        if (BibleText * bibleText = bibleLanguage->get_textsModel ()->getByUid (textKey)) {
+            bibleText->update_isLoading (true);
+        }
+    }
+}
+
+void BibleEngine::onDownloadProgress (const QString & textKey, const int percent) {
+    const QString languageId = textKey.split ("__").first ();
+    if (BibleLanguage * bibleLanguage = m_languagesModel->getByUid (languageId)) {
+        if (BibleText * bibleText = bibleLanguage->get_textsModel ()->getByUid (textKey)) {
+            bibleText->update_percent (percent);
+        }
+    }
+}
+
+void BibleEngine::onDownloadFinished (const QString & textKey, const bool ok) {
+    const QString languageId = textKey.split ("__").first ();
+    if (BibleLanguage * bibleLanguage = m_languagesModel->getByUid (languageId)) {
+        if (BibleText * bibleText = bibleLanguage->get_textsModel ()->getByUid (textKey)) {
+            bibleText->update_hasLocal (ok);
+            bibleText->update_isLoading (false);
+            doUpdateLanguagesFlags ();
+        }
+    }
+}
+
+void BibleEngine::onTextRemoved (const QString & textKey) {
+    const QString languageId = textKey.split ("__").first ();
+    if (BibleLanguage * bibleLanguage = m_languagesModel->getByUid (languageId)) {
+        if (BibleText * bibleText = bibleLanguage->get_textsModel ()->getByUid (textKey)) {
+            bibleText->update_hasLocal (false);
+        }
+    }
+}
+
+void BibleEngine::onBookmarkAdded (const QVariantMap & verse) {
+    const QString verseId = verse.value ("verseId").value<QString> ();
+    m_favoritesModel->append (new BibleVerse {
+                                  verseId,
+                                  verse.value ("textContent").value<QString> (),
+                                  verse.value ("marked").value<bool> (),
+                              });
+    if (BibleVerse * bibleVerse = m_versesModel->getByUid (verseId)) {
+        bibleVerse->update_marked (true);
+    }
+}
+
+void BibleEngine::onBookmarkRemoved (const QString & verseId) {
+    if (BibleVerse * bibleVerse = m_versesModel->getByUid (verseId)) {
+        bibleVerse->update_marked (false);
+    }
+    if (BibleVerse * bibleVerse = m_favoritesModel->getByUid (verseId)) {
+        m_favoritesModel->remove (bibleVerse);
+    }
+}
+
+void BibleEngine::onSearchStarted (void) {
+    update_isSearching (true);
+}
+
+void BibleEngine::onSearchProgress (const int percent) {
+    update_searchPercent (percent);
+}
+
+void BibleEngine::onSearchFound (const QVariantMap & verse) {
+    m_resultsModel->append (new BibleVerse {
+                                verse.value ("verseId").toString (),
+                                verse.value ("textContent").toString (),
+                            });
+}
+
+void BibleEngine::onSearchFinished (void) {
+    update_isSearching (false);
+}
+
+void BibleEngine::doUpdateLanguagesFlags (void) {
+    for (BibleLanguage * bibleLanguage : (* m_languagesModel)) {
+        bool hasLocal = false;
+        for (BibleText * bibleText : (* bibleLanguage->get_textsModel ())) {
+            if (bibleText->get_hasLocal ()) {
+                hasLocal = true;
+                break;
+            }
+        }
+        bibleLanguage->update_hasLocal (hasLocal);
+    }
+}
