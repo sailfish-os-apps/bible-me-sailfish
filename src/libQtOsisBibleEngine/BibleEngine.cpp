@@ -85,10 +85,10 @@ BibleEngine::BibleEngine (QObject * parent)
     connect (this, &BibleEngine::currentTranslationCodeChanged, [this] (void) {
         m_settings->setValue (QStringLiteral ("locale"), m_currentTranslationCode);
     });
-    m_showLocalOnly          = m_settings->value (QStringLiteral ("showLocalOnly")).value<bool> ();
-    m_textFontSize           = m_settings->value (QStringLiteral ("textFontSize")).value<int> ();
-    m_currentTextKey         = m_settings->value (QStringLiteral ("currentTextKey")).value<QString> ();
-    m_currentTranslationCode = m_settings->value (QStringLiteral ("locale")).value<QString> ();
+    m_showLocalOnly          = m_settings->value (QStringLiteral ("showLocalOnly"), m_showLocalOnly).value<bool> ();
+    m_textFontSize           = m_settings->value (QStringLiteral ("textFontSize"), m_textFontSize).value<int> ();
+    m_currentTextKey         = m_settings->value (QStringLiteral ("currentTextKey"), m_currentTextKey).value<QString> ();
+    m_currentTranslationCode = m_settings->value (QStringLiteral ("locale"), m_currentTranslationCode).value<QString> ();
     m_thread->start (QThread::LowPriority);
     emit loadIndexRequested ();
     if (!m_currentTextKey.isEmpty ()) {

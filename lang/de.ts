@@ -16,7 +16,7 @@
     <message>
         <location filename="../qml/pages/BookmarksPage.qml" line="60"/>
         <source>Removing %1</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 entfernen</translation>
     </message>
     <message>
         <location filename="../qml/pages/BookmarksPage.qml" line="122"/>
@@ -44,7 +44,7 @@
     <message>
         <location filename="../qml/pages/FilesPage.qml" line="140"/>
         <source>Deleting &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 entfernen</translation>
     </message>
     <message>
         <location filename="../qml/pages/FilesPage.qml" line="209"/>
@@ -103,7 +103,7 @@
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="29"/>
         <source>Language</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprache</translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="59"/>
