@@ -7,7 +7,12 @@ import "cover";
 ApplicationWindow {
     id: appWin;
     cover: coverPage;
-    initialPage: viewPage;
+    initialPage: selectPage;
+    Component.onCompleted: {
+        pageStack.pushAttached (viewPage);
+        pageStack.navigateForward (PageStackAction.Immediate);
+
+    }
 
     function $ (str) {
         return (bibleEngine.currentTranslationCode !== "" ? str : str + "");

@@ -142,7 +142,7 @@ Page {
                     }
                     onClicked: {
                         bibleEngine.changePosition (model.verseId);
-                        pageStack.navigateBack ();
+                        pageStack.navigateForward ();
                     }
 
                     Label {

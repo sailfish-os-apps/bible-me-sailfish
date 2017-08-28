@@ -38,7 +38,7 @@ Page {
                 left:  (parent ? parent.left  : undefined);
                 right: (parent ? parent.right : undefined);
             }
-            onClicked: { pageStack.push (selectPage); }
+            onClicked: { }
 
             Rectangle {
                 color: "white";
@@ -111,16 +111,14 @@ Page {
                 text: $ (qsTr ("Settings"));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
-                    pageStack.pushAttached (settingsPage);
-                    pageStack.navigateForward ();
+                    pageStack.push (settingsPage);
                 }
             }
             MenuItem {
                 text: $ (qsTr ("Bible version"));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
-                    pageStack.pushAttached (filesPage);
-                    pageStack.navigateForward ();
+                    pageStack.push(filesPage);
                 }
             }
             MenuItem {
