@@ -29,7 +29,7 @@ Page {
         anchors.fill: parent;
         anchors.topMargin: header.height;
 
-        property real itemWidth: ((width - 2) / 3);
+        readonly property real itemWidth: ((width - 2) / 3);
 
         SilicaListView {
             id: viewBooks;
@@ -39,30 +39,28 @@ Page {
                 bottom: parent.bottom;
             }
             model: bibleEngine.booksModel;
-            delegate:Component {
-                ListItem {
-                    contentHeight: Theme.itemSizeSmall;
+            delegate: ListItem {
+                contentHeight: Theme.itemSizeSmall;
+                anchors {
+                    left: parent.left;
+                    right: parent.right;
+                }
+                onClicked: { bibleEngine.changePosition (model.bookId + ".1.1"); }
+
+                Label {
+                    text: formatReference (model.bookId, true);
+                    color: (bibleEngine.currentBookId === model.bookId
+                            ? Theme.highlightColor
+                            : Theme.primaryColor);
+                    horizontalAlignment: Text.AlignHCenter;
+                    font.pixelSize: Theme.fontSizeSmall;
+                    font.family: Theme.fontFamilyHeading;
+                    fontSizeMode: Text.HorizontalFit;
                     anchors {
                         left: parent.left;
                         right: parent.right;
-                    }
-                    onClicked: { bibleEngine.loadBook (model.bookId); }
-
-                    Label {
-                        text: formatReference (model.bookId, true);
-                        color: (bibleEngine.currentBookId === model.bookId
-                                ? Theme.highlightColor
-                                : Theme.primaryColor);
-                        horizontalAlignment: Text.AlignHCenter;
-                        font.pixelSize: Theme.fontSizeSmall;
-                        font.family: Theme.fontFamilyHeading;
-                        fontSizeMode: Text.HorizontalFit;
-                        anchors {
-                            left: parent.left;
-                            right: parent.right;
-                            margins: Theme.paddingSmall;
-                            verticalCenter: parent.verticalCenter;
-                        }
+                        margins: Theme.paddingSmall;
+                        verticalCenter: parent.verticalCenter;
                     }
                 }
             }
@@ -86,30 +84,28 @@ Page {
                 bottom: parent.bottom;
             }
             model: bibleEngine.chaptersModel;
-            delegate:Component {
-                ListItem {
-                    contentHeight: Theme.itemSizeSmall;
+            delegate: ListItem {
+                contentHeight: Theme.itemSizeSmall;
+                anchors {
+                    left: parent.left;
+                    right: parent.right;
+                }
+                onClicked: { bibleEngine.changePosition (model.chapterId + ".1"); }
+
+                Label {
+                    text: formatReference (model.chapterId, true);
+                    color: (bibleEngine.currentChapterId === model.chapterId
+                            ? Theme.highlightColor
+                            : Theme.primaryColor);
+                    horizontalAlignment: Text.AlignHCenter;
+                    font.pixelSize: Theme.fontSizeSmall;
+                    font.family: Theme.fontFamilyHeading;
+                    elide: Text.ElideRight;
                     anchors {
                         left: parent.left;
                         right: parent.right;
-                    }
-                    onClicked: { bibleEngine.loadChapter (model.chapterId); }
-
-                    Label {
-                        text: formatReference (model.chapterId, true);
-                        color: (bibleEngine.currentChapterId === model.chapterId
-                                ? Theme.highlightColor
-                                : Theme.primaryColor);
-                        horizontalAlignment: Text.AlignHCenter;
-                        font.pixelSize: Theme.fontSizeSmall;
-                        font.family: Theme.fontFamilyHeading;
-                        elide: Text.ElideRight;
-                        anchors {
-                            left: parent.left;
-                            right: parent.right;
-                            margins: Theme.paddingSmall;
-                            verticalCenter: parent.verticalCenter;
-                        }
+                        margins: Theme.paddingSmall;
+                        verticalCenter: parent.verticalCenter;
                     }
                 }
             }
@@ -128,44 +124,41 @@ Page {
         SilicaListView {
             id: viewVerses;
             width: parent.itemWidth;
-            anchors {
-                top: parent.top;
-                bottom: parent.bottom;
-            }
             model: bibleEngine.versesModel;
-            delegate:Component {
-                ListItem {
-                    contentHeight: Theme.itemSizeSmall;
+            delegate: ListItem {
+                contentHeight: Theme.itemSizeSmall;
+                anchors {
+                    left: parent.left;
+                    right: parent.right;
+                }
+                onClicked: {
+                    bibleEngine.changePosition (model.verseId);
+                    pageStack.navigateForward ();
+                }
+
+                Label {
+                    text: formatReference (model.verseId, true);
+                    color: (bibleEngine.currentVerseId === model.verseId
+                            ? Theme.highlightColor
+                            : Theme.primaryColor);
+                    horizontalAlignment: Text.AlignHCenter;
+                    font.pixelSize: Theme.fontSizeSmall;
+                    font.family: Theme.fontFamilyHeading;
+                    elide: Text.ElideRight;
                     anchors {
                         left: parent.left;
                         right: parent.right;
-                    }
-                    onClicked: {
-                        bibleEngine.changePosition (model.verseId);
-                        pageStack.navigateForward ();
-                    }
-
-                    Label {
-                        text: formatReference (model.verseId, true);
-                        color: (bibleEngine.currentVerseId === model.verseId
-                                ? Theme.highlightColor
-                                : Theme.primaryColor);
-                        horizontalAlignment: Text.AlignHCenter;
-                        font.pixelSize: Theme.fontSizeSmall;
-                        font.family: Theme.fontFamilyHeading;
-                        elide: Text.ElideRight;
-                        anchors {
-                            left: parent.left;
-                            right: parent.right;
-                            margins: Theme.paddingSmall;
-                            verticalCenter: parent.verticalCenter;
-                        }
+                        margins: Theme.paddingSmall;
+                        verticalCenter: parent.verticalCenter;
                     }
                 }
+            }
+            anchors {
+                top: parent.top;
+                bottom: parent.bottom;
             }
 
             VerticalScrollDecorator { }
         }
     }
-
 }

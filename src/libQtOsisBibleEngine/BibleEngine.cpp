@@ -145,20 +145,22 @@ void BibleEngine::loadChapter (const QString & chapterId) {
 void BibleEngine::changePosition (const QString & verseId) {
     const QStringList newParts = verseId.split ('.');
     const QStringList oldParts = m_currentVerseId.split ('.');
-    if (newParts.count () == 3 &&
-        oldParts.count () == 3) {
-        const QString newBook = newParts.at (0);
-        const QString oldBook = oldParts.at (0);
-        if (newBook != oldBook) {
-            update_currentBookId (newBook);
-            loadBook (m_currentBookId);
-        }
-        const QString newChapter = (newBook % '.' % newParts.at (1));
-        const QString oldChapter = (oldBook % '.' % oldParts.at (1));
-        if (newChapter != oldChapter) {
-            update_currentChapterId (newChapter);
-            loadChapter (m_currentChapterId);
-        }
+    QString oldBook, newBook, oldChapter, newChapter;
+    if (newParts.count () == 3) {
+        newBook = newParts.at (0);
+        newChapter = (newBook % '.' % newParts.at (1));
+    }
+    if (oldParts.count () == 3) {
+        oldBook = oldParts.at (0);
+        oldChapter = (oldBook % '.' % oldParts.at (1));
+    }
+    if (newBook != oldBook) {
+        update_currentBookId (newBook);
+        loadBook (m_currentBookId);
+    }
+    if (newChapter != oldChapter) {
+        update_currentChapterId (newChapter);
+        loadChapter (m_currentChapterId);
     }
     update_currentVerseId (verseId);
 }
