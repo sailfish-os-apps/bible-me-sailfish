@@ -32,13 +32,12 @@ Page {
         opacity: (enabled ? 1.0 : 0.35);
         anchors.fill: parent;
         model: bibleEngine.versesModel;
-        header: BackgroundItem {
+        header: Item {
             height: Theme.itemSizeMedium;
             anchors {
                 left:  (parent ? parent.left  : undefined);
                 right: (parent ? parent.right : undefined);
             }
-            onClicked: { }
 
             Rectangle {
                 color: "white";
@@ -118,7 +117,8 @@ Page {
                 text: $ (qsTr ("Bible version"));
                 font.family: Theme.fontFamilyHeading;
                 onClicked: {
-                    pageStack.push(filesPage);
+                    pageStack.pushAttached (filesPage);
+                    pageStack.navigateForward ();
                 }
             }
             MenuItem {
