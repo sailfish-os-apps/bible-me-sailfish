@@ -6,6 +6,9 @@ Page {
     id: page;
     allowedOrientations: Orientation.All;
 
+    readonly property string currentBookId     : (bibleEngine.currentVerseId.split ('.') [0] || "");
+    readonly property int    currentChapterNum : (parseInt (bibleEngine.currentVerseId.split ('.') [1] || "0"));
+
     function repositionView () {
         var tmp = bibleEngine.currentVerseId.split ('.');
         if (tmp.length === 3) {
@@ -137,25 +140,31 @@ Page {
                     pageStack.navigateForward ();
                 }
             }
+            MenuItem {
+                text: $ (qsTr ("Back to previous chapter"));
+                font.family: Theme.fontFamilyHeading;
+                enabled: (currentBookId !== "" && currentChapterNum > 1 && currentChapterNum <= bibleEngine.chaptersModel.count);
+                onClicked: {
+                    view.positionViewAtBeginning ();
+                    bibleEngine.changePosition ("%1.%2.1".arg (currentBookId).arg (currentChapterNum -1));
+                }
+            }
         }
         PushUpMenu {
             MenuItem {
                 text: $ (qsTr ("Go to next chapter"));
                 font.family: Theme.fontFamilyHeading;
-                enabled: (currentBookName !== "" && currentChapterIdx > 0 && currentChapterIdx < bibleEngine.chaptersModel.count);
+                enabled: (currentBookId !== "" && currentChapterNum > 0 && currentChapterNum < bibleEngine.chaptersModel.count);
                 onClicked: {
                     view.positionViewAtBeginning ();
-                    bibleEngine.changePosition ("%1.%2.1".arg (currentBookName).arg (currentChapterIdx +1));
+                    bibleEngine.changePosition ("%1.%2.1".arg (currentBookId).arg (currentChapterNum +1));
                 }
-
-                readonly property string currentBookName   : (bibleEngine.currentVerseId.split ('.') [0] || "");
-                readonly property int    currentChapterIdx : (parseInt (bibleEngine.currentVerseId.split ('.') [1] || "0"));
             }
         }
         ViewPlaceholder {
             text: $ (bibleEngine.currentTextKey === ""
                      ? qsTr ("No text available. Use the menu to choose one")
-                     : qsTr ("No verse select. Click on header to select"));
+                     : qsTr ("No verse selected. Swipe right-to-left"));
             enabled: (!view.count);
         }
         VerticalScrollDecorator { }

@@ -15,15 +15,16 @@
 #include <QCoreApplication>
 
 BibleEngine::BibleEngine (QObject * parent)
-    : QObject          { parent    }
-    , m_isRefreshing   { false     }
-    , m_isLoading      { false     }
-    , m_isSearching    { false     }
-    , m_showLocalOnly  { false     }
-    , m_textFontSize   { 32        }
-    , m_refreshPercent { 0         }
-    , m_searchPercent  { 0         }
-    , m_translator     { Q_NULLPTR }
+    : QObject          { parent      }
+    , m_isRefreshing   { false       }
+    , m_isLoading      { false       }
+    , m_isSearching    { false       }
+    , m_showLocalOnly  { false       }
+    , m_textFontSize   { 32          }
+    , m_refreshPercent { 0           }
+    , m_searchPercent  { 0           }
+    , m_currentTextKey { "John.3.16" }
+    , m_translator     { Q_NULLPTR   }
 {
     qRegisterMetaType<QList<QVariantMap>> ();
     m_languagesModel = new QQmlObjectListModel<BibleLanguage> (this, "", "languageId");
