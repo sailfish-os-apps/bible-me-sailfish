@@ -11,7 +11,6 @@ ApplicationWindow {
     Component.onCompleted: {
         pageStack.pushAttached (viewPage);
         pageStack.navigateForward (PageStackAction.Immediate);
-
     }
 
     function $ (str) {

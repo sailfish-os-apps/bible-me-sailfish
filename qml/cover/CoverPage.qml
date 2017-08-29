@@ -59,7 +59,17 @@ CoverBackground {
         CoverAction {
             iconSource: "image://theme/icon-cover-search";
             onTriggered: {
-                pageStack.navigateBack (PageStackAction.Immediate);
+                switch (pageStack.depth) {
+                case 1:
+                    pageStack.navigateForward (PageStackAction.Immediate);
+                    break;
+                case 2:
+                    // do nothing
+                    break;
+                case 3:
+                    pageStack.navigateBack (PageStackAction.Immediate);
+                    break;
+                }
                 pageStack.pushAttached (searchPage);
                 pageStack.navigateForward (PageStackAction.Immediate);
                 activate ();
@@ -68,8 +78,18 @@ CoverBackground {
         CoverAction {
             iconSource: "image://theme/icon-cover-location";
             onTriggered: {
-                pageStack.navigateBack (PageStackAction.Immediate);
-                pageStack.push (selectPage);
+                switch (pageStack.depth) {
+                case 1:
+                    // do nothing
+                    break;
+                case 2:
+                    pageStack.navigateBack (PageStackAction.Immediate);
+                    break;
+                case 3:
+                    pageStack.navigateBack (PageStackAction.Immediate);
+                    pageStack.navigateBack (PageStackAction.Immediate);
+                    break;
+                }
                 activate ();
             }
         }
