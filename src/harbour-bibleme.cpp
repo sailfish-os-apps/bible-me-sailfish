@@ -11,7 +11,6 @@
 #include <sailfishapp.h>
 
 #include "QQmlObjectListModel.h"
-#include "QQmlVariantListModel.h"
 
 #include "BibleEngine.h"
 #include "BibleWorker.h"
@@ -27,7 +26,6 @@ int main (int argc, char * argv []) {
     QSettings::setDefaultFormat (QSettings::IniFormat);
     qmlRegisterUncreatableType<QAbstractListModel>      (QML_MODULE, "AbstractListModel",  "!!!");
     qmlRegisterUncreatableType<QQmlObjectListModelBase> (QML_MODULE, "ObjectListModel",    "!!!");
-    qmlRegisterUncreatableType<QQmlVariantListModel>    (QML_MODULE, "VariantListModel",   "!!!");
     qmlRegisterType<BibleEngine>                        (QML_MODULE, "BibleEngine");
     qmlRegisterType<BibleLanguage>                      (QML_MODULE, "BibleLanguage");
     qmlRegisterType<BibleText>                          (QML_MODULE, "BibleText");
