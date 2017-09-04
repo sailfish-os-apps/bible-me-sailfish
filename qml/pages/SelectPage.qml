@@ -48,7 +48,7 @@ Page {
                 onClicked: { bibleEngine.changePosition (model.bookId + ".1.1"); }
 
                 Label {
-                    text: formatReference (model.bookId, true);
+                    text: $ (bibleEngine.formatReference (model.bookId, true));
                     color: (bibleEngine.currentBookId === model.bookId
                             ? Theme.highlightColor
                             : Theme.primaryColor);
@@ -93,7 +93,7 @@ Page {
                 onClicked: { bibleEngine.changePosition (model.chapterId + ".1"); }
 
                 Label {
-                    text: formatReference (model.chapterId, true);
+                    text: $ (bibleEngine.formatReference (model.chapterId, true));
                     color: (bibleEngine.currentChapterId === model.chapterId
                             ? Theme.highlightColor
                             : Theme.primaryColor);
@@ -137,7 +137,7 @@ Page {
                 }
 
                 Label {
-                    text: formatReference (model.verseId, true);
+                    text: $ (bibleEngine.formatReference (model.verseId, true));
                     color: (bibleEngine.currentVerseId === model.verseId
                             ? Theme.highlightColor
                             : Theme.primaryColor);

@@ -1,6 +1,7 @@
 import QtQuick 2.0;
 import Sailfish.Silica 1.0;
 import harbour.bibleme.myPrivateImports 1.0;
+import "../components";
 
 Page {
     id: page;
@@ -24,103 +25,79 @@ Page {
             title: $ (qsTr ("Bookmarks"));
         }
     }
-    SilicaListView {
-        id: view;
-        clip: true;
-        anchors.fill: parent;
-        anchors.topMargin: header.height;
-        model: bibleEngine.favoritesModel;
-        delegate:Component {
-            ListItem {
-                id: itemVerse;
-                contentHeight: (layoutText.height + layoutText.anchors.margins * 2);
-                menu: Component {
-                    ContextMenu {
-                        MenuItem {
-                            text: $ (qsTr ("Remove from bookmarks"));
-                            onClicked: { remove (); }
-                        }
-                    }
-                }
-                anchors {
-                    left: parent.left;
-                    right: parent.right;
-                }
-                onClicked: {
-                    pageStack.navigateBack ();
-                    bibleEngine.changePosition (bibleVerse.verseId);
-                }
+    Item {
+        id: footer;
+        height: Math.max ((btnExpand.height   + btnExpand.anchors.margins * 2),
+                          (btnCollapse.height + btnCollapse.anchors.margins * 2));
+        anchors {
+            left: parent.left;
+            right: parent.right;
+            bottom: parent.bottom;
+        }
 
-                readonly property BibleVerse bibleVerse : model ['qtObject'];
-
-                property bool dimmed : false;
-
-                function remove () {
-                    itemVerse.dimmed = true;
-                    remorse.execute (placeholder, $ (qsTr ("Removing %1")).arg (formatReference (bibleVerse.verseId)));
-                }
-
-                RemorseItem {
-                    id: remorse;
-                    onTriggered: {
-                        bibleEngine.removeBookmark (itemVerse.bibleVerse.verseId);
-                        itemVerse.dimmed = false;
-                    }
-                    onCanceled: {
-                        itemVerse.dimmed = false;
-                    }
-                }
-                Column {
-                    id: layoutText;
-                    opacity: (itemVerse.dimmed ? 0.0 : 1.0);
-                    anchors {
-                        top: parent.top;
-                        left: parent.left;
-                        right: parent.right;
-                        margins: Theme.paddingMedium;
-                    }
-
-                    Label {
-                        text: formatReference (model.verseId);
-                        color: Theme.primaryColor;
-                        textFormat: Text.PlainText;
-                        horizontalAlignment: Text.AlignLeft;
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                        font {
-                            family: Theme.fontFamilyHeading;
-                            pixelSize: Theme.fontSizeMedium;
-                        }
-                        anchors {
-                            left: parent.left;
-                            right: parent.right;
-                        }
-                    }
-                    Label {
-                        text: model.textContent;
-                        color: Theme.secondaryColor;
-                        textFormat: Text.PlainText;
-                        horizontalAlignment: Text.AlignJustify;
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                        font {
-                            family: Theme.fontFamilyHeading;
-                            pixelSize: Theme.fontSizeTiny;
-                        }
-                        anchors {
-                            left: parent.left;
-                            right: parent.right;
-                        }
-                    }
-                }
-                Item {
-                    id: placeholder;
-                    anchors.fill: parent;
+        Rectangle {
+            color: "white";
+            opacity: 0.15;
+            anchors.fill: parent;
+        }
+        Button {
+            id: btnExpand;
+            text: $ (qsTr ("Expand all"));
+            enabled: repeaterFavoritesGroups.count;
+            anchors {
+                left: parent.left;
+                margins: Theme.paddingMedium;
+                verticalCenter: parent.verticalCenter;
+            }
+            onClicked: {
+                for (var idx = 0; idx < repeaterFavoritesGroups.count; ++idx) {
+                    repeaterFavoritesGroups.itemAt (idx) ["expanded"] = true;
                 }
             }
         }
+        Button {
+            id: btnCollapse;
+            text: $ (qsTr ("Collapse all"));
+            enabled: repeaterFavoritesGroups.count;
+            anchors {
+                right: parent.right;
+                margins: Theme.paddingMedium;
+                verticalCenter: parent.verticalCenter;
+            }
+            onClicked: {
+                for (var idx = 0; idx < repeaterFavoritesGroups.count; ++idx) {
+                    repeaterFavoritesGroups.itemAt (idx) ["expanded"] = false;
+                }
+            }
+        }
+    }
+    SilicaFlickable {
+        id: view;
+        clip: true;
+        contentHeight: layoutFavorites.height;
+        anchors.fill: parent;
+        anchors.topMargin: header.height;
+        anchors.bottomMargin: footer.height;
 
+        Column {
+            id: layoutFavorites;
+            anchors {
+                top: parent.top;
+                left: parent.left;
+                right: parent.right;
+            }
+
+            Repeater {
+                id: repeaterFavoritesGroups;
+                model: bibleEngine.favoritesModel;
+                delegate: GroupListItem {
+                    bibleGroup: model.qtObject;
+                }
+            }
+        }
         ViewPlaceholder {
             text: $ (qsTr ("No bookmark."));
-            enabled: (!view.count);
+            enabled: (bibleEngine.favoritesTotal === 0);
         }
         VerticalScrollDecorator { }
     }

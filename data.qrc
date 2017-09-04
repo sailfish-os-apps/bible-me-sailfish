@@ -16,5 +16,7 @@
         <file>lang/fi.ts</file>
         <file>lang/fr.ts</file>
         <file>lang/de.qm</file>
+        <file>qml/components/VerseListItem.qml</file>
+        <file>qml/components/GroupListItem.qml</file>
     </qresource>
 </RCC>

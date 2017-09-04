@@ -68,7 +68,7 @@ Page {
         onValueChanged: { bibleEngine.textFontSize = value; }
 
         Binding on value {
-            value: bibleEngine.textFontSize;
+            value: (bibleEngine.textFontSize || Theme.fontSizeMedium);
             when: !slider.down;
         }
     }

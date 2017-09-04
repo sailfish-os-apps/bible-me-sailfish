@@ -1,6 +1,7 @@
 import QtQuick 2.0;
 import Sailfish.Silica 1.0;
 import harbour.bibleme.myPrivateImports 1.0;
+import "../components";
 
 Page {
     id: page;
@@ -48,64 +49,11 @@ Page {
                 anchors.fill: parent;
             }
             PageHeader {
-                title: formatReference (bibleEngine.currentVerseId);
+                title: $ (bibleEngine.formatReference (bibleEngine.currentVerseId));
             }
         }
-        delegate: Component {
-            ListItem {
-                id: itemText;
-                contentHeight: (lblVerse.contentHeight + lblVerse.anchors.margins * 2);
-                menu: Component {
-                    ContextMenu {
-                        MenuItem {
-                            text: $ (qsTr ("Copy text"));
-                            onClicked: { Clipboard.text = model.textContent; }
-                        }
-                        MenuItem {
-                            text: $ (qsTr ("Copy reference"));
-                            onClicked: { Clipboard.text = formatReference (model.verseId); }
-                        }
-                        MenuItem {
-                            text: $ (model.marked ? qsTr ("Remove from bookmarks") : qsTr ("Add to bookmarks"));
-                            onClicked: {
-                                if (model.marked) {
-                                    bibleEngine.removeBookmark (model.verseId);
-                                }
-                                else {
-                                    bibleEngine.addBookmark (model.verseId);
-                                }
-                            }
-                        }
-                    }
-                }
-                anchors {
-                    left: (parent ? parent.left : undefined);
-                    right: (parent ? parent.right : undefined);
-                }
-                onClicked: { bibleEngine.changePosition (model.verseId); }
-
-                readonly property bool isCurrent : (bibleEngine.currentVerseId === model.verseId);
-
-                Label {
-                    id: lblVerse;
-                    text: '<font color="%1">%2.</font> %3'.arg (Theme.secondaryHighlightColor.toString ()).arg (model.index +1).arg (model.textContent);
-                    textFormat: Text.StyledText;
-                    horizontalAlignment: Text.AlignJustify;
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                    color: (isCurrent ? Theme.highlightColor : Theme.primaryColor);
-                    font {
-                        bold: model.marked;
-                        family: Theme.fontFamilyHeading;
-                        pixelSize: bibleEngine.textFontSize;
-                    }
-                    anchors {
-                        top: parent.top;
-                        left: parent.left;
-                        right: parent.right;
-                        margins: Theme.paddingMedium;
-                    }
-                }
-            }
+        delegate: VerseListItem {
+            bibleVerse: model.qtObject;
         }
 
         PullDownMenu {

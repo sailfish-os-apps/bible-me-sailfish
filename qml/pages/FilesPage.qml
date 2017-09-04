@@ -6,12 +6,60 @@ Page {
     id: page;
     allowedOrientations: Orientation.All;
 
+    Item {
+        id: footer;
+        height: Math.max ((btnExpand.height   + btnExpand.anchors.margins * 2),
+                          (btnCollapse.height + btnCollapse.anchors.margins * 2));
+        anchors {
+            left: parent.left;
+            right: parent.right;
+            bottom: parent.bottom;
+        }
+
+        Rectangle {
+            color: "white";
+            opacity: 0.15;
+            anchors.fill: parent;
+        }
+        Button {
+            id: btnExpand;
+            text: $ (qsTr ("Expand all"));
+            enabled: repeaterLanguages.count;
+            anchors {
+                left: parent.left;
+                margins: Theme.paddingMedium;
+                verticalCenter: parent.verticalCenter;
+            }
+            onClicked: {
+                for (var idx = 0; idx < repeaterLanguages.count; ++idx) {
+                    repeaterLanguages.itemAt (idx) ["expanded"] = true;
+                }
+            }
+        }
+        Button {
+            id: btnCollapse;
+            text: $ (qsTr ("Collapse all"));
+            enabled: repeaterLanguages.count;
+            anchors {
+                right: parent.right;
+                margins: Theme.paddingMedium;
+                verticalCenter: parent.verticalCenter;
+            }
+            onClicked: {
+                for (var idx = 0; idx < repeaterLanguages.count; ++idx) {
+                    repeaterLanguages.itemAt (idx) ["expanded"] = false;
+                }
+            }
+        }
+    }
     SilicaFlickable {
         id: view;
+        clip: true;
         enabled: !busy.visible;
         opacity: (enabled ? 1.0 : 0.35);
         contentHeight: layout.height;
         anchors.fill: parent;
+        anchors.bottomMargin: footer.height;
 
         Column {
             id: layout;
@@ -39,7 +87,7 @@ Page {
                 }
             }
             Repeater {
-                id: repeater;
+                id: repeaterLanguages;
                 model: bibleEngine.languagesModel;
                 delegate: Column {
                     id: itemLanguage;
@@ -97,7 +145,7 @@ Page {
                     }
                     Repeater {
                         id: subrepeater;
-                        model: (itemLanguage.expanded ? itemLanguage.bibleLanguage.textsModel : 0);
+                        model: (itemLanguage.expanded && itemLanguage.visible ? itemLanguage.bibleLanguage.textsModel : 0);
                         delegate: ListItem {
                             id: itemText;
                             visible: (!bibleEngine.showLocalOnly || itemText.bibleText.hasLocal);
@@ -162,7 +210,7 @@ Page {
                             Label {
                                 id: lblTitle;
                                 text: itemText.bibleText.bibleTitle;
-                                color: (itemText.key === bibleEngine.currentTextKey
+                                color: (itemText.bibleText.textKey === bibleEngine.currentTextKey
                                         ? Theme.highlightColor
                                         : (itemText.bibleText.hasLocal
                                            ? Theme.primaryColor
@@ -218,7 +266,7 @@ Page {
         }
         ViewPlaceholder {
             text: $ (qsTr ("No Bible available. Try refresh !"));
-            enabled: (!repeater.count);
+            enabled: (!repeaterLanguages.count);
         }
         VerticalScrollDecorator { }
     }
